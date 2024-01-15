@@ -1,22 +1,20 @@
-import akka.actor.typed.{ ActorSystem, Behavior }
+import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.cluster.sharding.typed.scaladsl.{
-  ClusterSharding,
-  Entity,
-  EntityTypeKey
-}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.util.Timeout
+import deliverydate.DeliveryDate
 
 import java.time.Instant
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 object DeliveryDateService {
 
   private val TypeKey: EntityTypeKey[DeliveryDate.Command] =
     EntityTypeKey[DeliveryDate.Command]("DeliveryDate")
 
+  // TODO replace this
   def main(args: Array[String]): Unit = {
     val system =
       ActorSystem[DeliveryDate.Command](behavior(), "delivery-date-service")

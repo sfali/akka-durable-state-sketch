@@ -1,6 +1,8 @@
+package deliverydate
+
 import akka.actor.typed.ActorRef
-import akka.persistence.typed.state.scaladsl.{ DurableStateBehavior, Effect }
 import akka.persistence.typed.PersistenceId
+import akka.persistence.typed.state.scaladsl.{DurableStateBehavior, Effect}
 
 import java.time.Instant
 import java.util.UUID
@@ -35,7 +37,6 @@ object DeliveryDate {
       commandHandler = (state, command) =>
         command match {
           case UpdateDeliveryDate(packageId, updatedDate, replyTo) =>
-
             println(state.packageId + " date: " + state.deliveryDate)
 
             val updatedState =
