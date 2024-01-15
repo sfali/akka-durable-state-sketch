@@ -32,9 +32,12 @@ object DeliveryDate {
         deliveryDate = None,
         updated = Instant.now()
       ),
-      commandHandler = (_, command) =>
+      commandHandler = (state, command) =>
         command match {
           case UpdateDeliveryDate(packageId, updatedDate, replyTo) =>
+
+            println(state.packageId + " date: " + state.deliveryDate)
+
             val updatedState =
               DeliveryDateState(packageId, Some(updatedDate), Instant.now())
             replyTo ! UpdateSuccessful(packageId)
