@@ -21,7 +21,7 @@ object DeliveryDate {
     replyTo: ActorRef[Reply])
       extends Command
 
-  sealed trait Reply
+  trait Reply
   final case class UpdateSuccessful(packageId: UUID) extends Reply
 
   def apply(
