@@ -3,8 +3,8 @@ package service
 import akka.actor.typed.ActorSystem
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityTypeKey}
 import akka.util.Timeout
-import deliverydate.DeliveryDate
-import deliverydate.DeliveryDate.{Reply, UpdateDeliveryDate}
+import deliverydate.DeliveryDateEntity
+import deliverydate.DeliveryDateEntity.{Reply, UpdateDeliveryDate}
 import org.slf4j.LoggerFactory
 
 import java.time.Instant
@@ -22,8 +22,8 @@ class DefaultDeliveryDateService(
 
   private implicit val askTimeout: Timeout = Timeout(5.seconds)
 
-  val TypeKey: EntityTypeKey[DeliveryDate.Command] =
-    EntityTypeKey[DeliveryDate.Command]("DeliveryDate")
+  val TypeKey: EntityTypeKey[DeliveryDateEntity.Command] =
+    EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate")
 
   override def upsertDeliveryDate(
     packageId: UUID,

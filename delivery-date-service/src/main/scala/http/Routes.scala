@@ -1,18 +1,18 @@
 package http
 
-import akka.http.scaladsl.server.Route
-import service.DeliveryDateService
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import java.time.Instant
-import java.util.UUID
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
+import service.DeliveryDateService
+
+import java.time.Instant
+import java.util.UUID
 import scala.concurrent.Future
 
 class Routes(deliveryDateService: DeliveryDateService) {
 
-  final case class UpdatedDate(updatedDate: Instant)
+  private final case class UpdatedDate(updatedDate: Instant)
 
   private def processEvent(
     packageId: UUID,

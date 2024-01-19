@@ -1,8 +1,8 @@
 import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
-import deliverydate.DeliveryDate
-import deliverydate.DeliveryDate.Command
+import deliverydate.DeliveryDateEntity
+import deliverydate.DeliveryDateEntity.Command
 import http.{DeliveryDateHttpServer, Routes}
 import service.DefaultDeliveryDateService
 
@@ -25,7 +25,7 @@ object DeliveryDateApp {
       val clusterSharding = ClusterSharding(system)
 
       clusterSharding.init(Entity(TypeKey) { entityContext =>
-        DeliveryDate(UUID.fromString(entityContext.entityId))
+        DeliveryDateEntity(UUID.fromString(entityContext.entityId))
       })
 
       val deliveryDateService = new DefaultDeliveryDateService(clusterSharding)

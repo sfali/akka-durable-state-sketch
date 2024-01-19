@@ -7,7 +7,7 @@ import akka.persistence.typed.state.scaladsl.{DurableStateBehavior, Effect}
 import java.time.Instant
 import java.util.UUID
 
-object DeliveryDate {
+object DeliveryDateEntity {
 
   final case class DeliveryDateState(
     packageId: UUID,
