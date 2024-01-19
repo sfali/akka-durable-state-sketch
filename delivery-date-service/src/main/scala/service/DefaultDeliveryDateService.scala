@@ -23,7 +23,7 @@ class DefaultDeliveryDateService(
   private implicit val askTimeout: Timeout = Timeout(5.seconds)
 
   val TypeKey: EntityTypeKey[DeliveryDateEntity.Command] =
-    EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate ")
+    EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate")
 
   override def upsertDeliveryDate(
     packageId: UUID,
