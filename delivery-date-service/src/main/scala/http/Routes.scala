@@ -10,6 +10,8 @@ import java.time.Instant
 import java.util.UUID
 import scala.concurrent.Future
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class Routes(deliveryDateService: DeliveryDateService) {
 
   private final case class UpdatedDate(updatedDate: Instant)
@@ -19,6 +21,13 @@ class Routes(deliveryDateService: DeliveryDateService) {
     updatedDate: Instant
   ): Future[String] = {
     deliveryDateService.upsertDeliveryDate(packageId, updatedDate)
+  }
+
+  private def retrieveDeliveryDate(packageId: UUID): Future[String] = {
+    deliveryDateService.getDeliveryDate(packageId).map {
+      case Some(date) => s"PackageId: $packageId has delivery date: $date"
+      case None => s"PackageId: $packageId has not had an initial delivery date"
+    }
   }
 
   val routes: Route = {
@@ -32,7 +41,13 @@ class Routes(deliveryDateService: DeliveryDateService) {
               complete(s"Result: $response")
             }
           }
-        }
+        } ~
+          get {
+            onSuccess(retrieveDeliveryDate(UUID.fromString(deviceId))) {
+              response =>
+                complete(s"Result: $response")
+            }
+          }
       }
     }
   }
