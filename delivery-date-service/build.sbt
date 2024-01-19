@@ -5,7 +5,7 @@ ThisBuild / scalaVersion := "2.13.12"
 lazy val akka_version = "2.8.0"
 lazy val SlickVersion = "3.4.1"
 lazy val AkkaManagementVersion = "1.1.3"
-lazy val akkaHttpVersion = "10.2.8"
+lazy val akkaHttpVersion = "10.2.7"
 lazy val circeVersion = "0.14.1"
 
 
@@ -13,6 +13,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "delivery-date-service",
     libraryDependencies ++= Seq(
+//      "org.typelevel" %% "cats-core" % "2.9.0",
       "com.typesafe.akka" %% "akka-actor-typed" % akka_version,
       "com.typesafe.akka" %% "akka-persistence-typed" % akka_version,
       "com.typesafe.akka" %% "akka-persistence-testkit" % akka_version,

@@ -4,7 +4,7 @@ import akka.actor.typed.ActorSystem
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityTypeKey}
 import akka.util.Timeout
 import deliverydate.DeliveryDateEntity
-import deliverydate.DeliveryDateEntity.{Reply, UpdateDeliveryDate}
+import deliverydate.DeliveryDateEntity.{DeliveryDate, GetDeliveryDate, UpdateDeliveryDate, UpdateSuccessful}
 import org.slf4j.LoggerFactory
 
 import java.time.Instant
@@ -31,11 +31,21 @@ class DefaultDeliveryDateService(
   ): Future[String] = {
     clusterSharding
       .entityRefFor(TypeKey, packageId.toString)
-      .ask[Reply] { ref =>
+      .ask[UpdateSuccessful] { ref =>
         UpdateDeliveryDate(packageId, updatedDate, ref)
       }.map { reply =>
         log.info(s"Got reply back from DeliveryDate Entity: $reply")
         reply.toString
+      }
+  }
+
+  override def getDeliveryDate(packageId: UUID): Future[Option[Instant]] = {
+    clusterSharding
+      .entityRefFor(TypeKey, packageId.toString)
+      .ask[DeliveryDate] { ref =>
+        GetDeliveryDate(packageId, ref)
+      }.map { reply =>
+        reply.deliveryDate
       }
   }
 }
