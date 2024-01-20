@@ -22,6 +22,7 @@ class DefaultDeliveryDateService(
 
   private implicit val askTimeout: Timeout = Timeout(5.seconds)
 
+  // move to object?
   val TypeKey: EntityTypeKey[DeliveryDateEntity.Command] =
     EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate")
 
@@ -34,7 +35,6 @@ class DefaultDeliveryDateService(
       .ask[UpdateSuccessful] { ref =>
         UpdateDeliveryDate(packageId, updatedDate, ref)
       }.map { reply =>
-        log.info(s"Got reply back from DeliveryDate Entity: $reply")
         reply.toString
       }
   }

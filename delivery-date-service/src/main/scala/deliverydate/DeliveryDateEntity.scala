@@ -47,9 +47,6 @@ object DeliveryDateEntity {
       commandHandler = (state, command) =>
         command match {
           case UpdateDeliveryDate(packageId, updatedDate, replyTo) =>
-            log.info(
-              s"PackageId: $packageId from: ${state.deliveryDate} to $updatedDate"
-            )
             replyTo ! UpdateSuccessful(packageId)
             Effect.persist(
               DeliveryDateState(packageId, Some(updatedDate), Instant.now())

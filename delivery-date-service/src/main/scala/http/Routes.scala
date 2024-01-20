@@ -31,19 +31,19 @@ class Routes(deliveryDateService: DeliveryDateService) {
   }
 
   val routes: Route = {
-    pathPrefix("device") {
-      path(Segment) { deviceId =>
+    pathPrefix("package") {
+      path(Segment) { packageId =>
         put {
           entity(as[UpdatedDate]) { request =>
             onSuccess(
-              processEvent(UUID.fromString(deviceId), request.updatedDate)
+              processEvent(UUID.fromString(packageId), request.updatedDate)
             ) { response =>
               complete(s"Result: $response")
             }
           }
         } ~
           get {
-            onSuccess(retrieveDeliveryDate(UUID.fromString(deviceId))) {
+            onSuccess(retrieveDeliveryDate(UUID.fromString(packageId))) {
               response =>
                 complete(s"Result: $response")
             }
