@@ -4,13 +4,13 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_DB: testdb
+      POSTGRES_DB: testdb # TODO change name was testing complete
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
-      - ./src/main/resources/create-schema.sql:/docker-entrypoint-initdb.d/create-schema.sql
+      - ./src/main/resources/create-schema.sql:/docker-entrypoint-initdb.d/create-schema.sql # TODO move to migration folder
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest

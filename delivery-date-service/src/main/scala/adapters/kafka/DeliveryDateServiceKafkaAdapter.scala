@@ -1,27 +1,24 @@
 package adapters.kafka
 
-//import akka.actor.ActorSystem
-import akka.Done
 import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
 import akka.kafka.scaladsl.Consumer
-import akka.kafka.{ ConsumerSettings, Subscriptions }
+import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.Attributes
 import akka.stream.Attributes.LogLevels
 import akka.stream.scaladsl._
 import deliverydate.ExternalEvent
 import io.circe.generic.auto._
 import io.circe.parser._
-import org.apache.kafka.clients.consumer.{ ConsumerConfig, ConsumerRecord }
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
 import org.slf4j.LoggerFactory
 import service.DeliveryDateService
 
 import java.time.Instant
 import java.util.UUID
-import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 object DeliveryDateServiceKafkaAdapter {
   private val log = LoggerFactory.getLogger(this.getClass)
