@@ -26,7 +26,7 @@ object DeliveryDateServiceKafkaAdapter {
   private val groupId = "delivery-date-ingress"
   private val topic = "external-events"
 
-  def consumeFromKafka(
+  def consumeEventsFromKafka(
     deliveryDateService: DeliveryDateService,
     actorSystem: ActorSystem[_]
   ): Unit = {

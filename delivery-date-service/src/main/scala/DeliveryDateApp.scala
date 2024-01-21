@@ -1,10 +1,10 @@
-import adapters.http.{DeliveryDateHttpServer, Routes}
+import adapters.http.{ DeliveryDateHttpServer, Routes }
 import adapters.kafka.DeliveryDateServiceKafkaAdapter
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorSystem, Behavior}
-import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
+import akka.actor.typed.{ ActorSystem, Behavior }
+import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, Entity }
 import deliverydate.DeliveryDateEntity
-import deliverydate.DeliveryDateEntity.{Command, TypeKey}
+import deliverydate.DeliveryDateEntity.{ Command, TypeKey }
 import service.DefaultDeliveryDateService
 
 import java.util.UUID
@@ -34,7 +34,10 @@ object DeliveryDateApp {
         system
       )
 
-      DeliveryDateServiceKafkaAdapter.consumeFromKafka(deliveryDateService, system)
+      DeliveryDateServiceKafkaAdapter.consumeEventsFromKafka(
+        deliveryDateService,
+        system
+      )
 
       Behaviors.empty
     }
