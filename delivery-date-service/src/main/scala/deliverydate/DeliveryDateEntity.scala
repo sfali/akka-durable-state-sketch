@@ -1,14 +1,18 @@
 package deliverydate
 
 import akka.actor.typed.ActorRef
+import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{ DurableStateBehavior, Effect }
+import akka.persistence.typed.state.scaladsl.{DurableStateBehavior, Effect}
 import org.slf4j.LoggerFactory
 
 import java.time.Instant
 import java.util.UUID
 
 object DeliveryDateEntity {
+
+  val TypeKey: EntityTypeKey[DeliveryDateEntity.Command] =
+    EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate")
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
@@ -59,3 +63,5 @@ object DeliveryDateEntity {
     )
   }
 }
+
+

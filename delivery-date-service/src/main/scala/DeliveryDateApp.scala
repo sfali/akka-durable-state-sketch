@@ -1,18 +1,16 @@
+import adapters.http.{DeliveryDateHttpServer, Routes}
+import adapters.kafka.DeliveryDateServiceKafkaAdapter
 import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import deliverydate.DeliveryDateEntity
-import deliverydate.DeliveryDateEntity.Command
-import http.{DeliveryDateHttpServer, Routes}
+import deliverydate.DeliveryDateEntity.{Command, TypeKey}
 import service.DefaultDeliveryDateService
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object DeliveryDateApp {
-
-  val TypeKey: EntityTypeKey[Command] =
-    EntityTypeKey[Command]("DeliveryDate")
 
   def main(args: Array[String]): Unit = {
     ActorSystem[Command](behavior(), "delivery-date-app")
@@ -35,6 +33,8 @@ object DeliveryDateApp {
         port = 1234,
         system
       )
+
+      DeliveryDateServiceKafkaAdapter.consumeFromKafka(deliveryDateService, system)
 
       Behaviors.empty
     }

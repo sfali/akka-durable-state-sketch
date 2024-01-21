@@ -1,4 +1,4 @@
-package http
+package adapters.http
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -8,9 +8,8 @@ import service.DeliveryDateService
 
 import java.time.Instant
 import java.util.UUID
-import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class Routes(deliveryDateService: DeliveryDateService) {
 
