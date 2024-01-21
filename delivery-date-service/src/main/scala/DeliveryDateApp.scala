@@ -1,8 +1,8 @@
 import adapters.http.{DeliveryDateHttpServer, Routes}
 import adapters.kafka.DeliveryDateServiceKafkaAdapter
-import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
+import akka.actor.typed.{ActorSystem, Behavior}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
 import deliverydate.DeliveryDateEntity
 import deliverydate.DeliveryDateEntity.{Command, TypeKey}
 import service.DefaultDeliveryDateService

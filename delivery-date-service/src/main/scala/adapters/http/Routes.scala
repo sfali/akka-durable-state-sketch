@@ -30,7 +30,7 @@ class Routes(deliveryDateService: DeliveryDateService) {
   }
 
   val routes: Route = {
-    pathPrefix("package") {
+    pathPrefix("packageId") {
       path(Segment) { packageId =>
         put {
           entity(as[UpdatedDate]) { request =>
