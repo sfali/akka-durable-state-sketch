@@ -37,14 +37,14 @@ class Routes(deliveryDateService: DeliveryDateService) {
             onSuccess(
               processEvent(UUID.fromString(packageId), request.updatedDate)
             ) { response =>
-              complete(s"Result: $response")
+              complete(s"$response")
             }
           }
         } ~
           get {
             onSuccess(retrieveDeliveryDate(UUID.fromString(packageId))) {
               response =>
-                complete(s"Result: $response")
+                complete(s"$response")
             }
           }
       }

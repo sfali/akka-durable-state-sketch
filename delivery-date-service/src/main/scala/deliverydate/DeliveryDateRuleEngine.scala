@@ -22,6 +22,7 @@ object DeliveryDateRuleEngine {
         }
       case (None, None) =>
         process(newEventId)
+      case _ => "Unable to calculate DeliveryDate".invalidNel
     }
   }
 
