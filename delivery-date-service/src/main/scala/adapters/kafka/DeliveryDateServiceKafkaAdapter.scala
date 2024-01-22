@@ -60,7 +60,7 @@ object DeliveryDateServiceKafkaAdapter {
         deliveryDateService
           .upsertDeliveryDate(
             UUID.fromString(event.packageId),
-            Instant.parse(event.deliveryDate)
+            event.deliveryDate
           )
           .recover { case ex: Throwable =>
             s"DeliveryDateService failed to process event due to ${ex.getMessage}"

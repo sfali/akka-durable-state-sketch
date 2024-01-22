@@ -25,7 +25,8 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
       "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
 //      "org.apache.kafka" %% "kafka-clients" % AkkaVersion,
-      "com.typesafe.akka" %% "akka-stream-kafka" % "3.0.0", // Check for the latest version
+      "org.typelevel" %% "cats-core" % "2.9.0",
+      "com.typesafe.akka" %% "akka-stream-kafka" % "3.0.0",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,

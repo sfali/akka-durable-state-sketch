@@ -1,3 +1,5 @@
 package deliverydate
 
-case class ExternalEvent (packageId: String, deliveryDate: String)
+import java.time.Instant
+
+case class ExternalEvent (packageId: String, eventId: Int, deliveryDate: Instant)

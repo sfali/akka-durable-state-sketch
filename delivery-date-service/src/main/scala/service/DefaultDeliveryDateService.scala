@@ -3,7 +3,7 @@ package service
 import akka.actor.typed.ActorSystem
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityTypeKey}
 import akka.util.Timeout
-import deliverydate.DeliveryDateEntity
+import deliverydate.{DeliveryDateEntity}
 import deliverydate.DeliveryDateEntity.{DeliveryDate, GetDeliveryDate, UpdateDeliveryDate, UpdateSuccessful}
 import org.slf4j.LoggerFactory
 
