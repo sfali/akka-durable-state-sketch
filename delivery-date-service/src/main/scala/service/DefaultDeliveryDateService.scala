@@ -1,11 +1,10 @@
 package service
 
 import akka.actor.typed.ActorSystem
-import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityTypeKey}
+import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.util.Timeout
 import deliverydate.DeliveryDateEntity
-import deliverydate.DeliveryDateEntity.{DeliveryDate, GetDeliveryDate, Reply, UpdateDeliveryDate, UpdateFailed, UpdateSuccessful}
-import org.slf4j.LoggerFactory
+import deliverydate.DeliveryDateEntity._
 
 import java.time.Instant
 import java.util.UUID
@@ -18,18 +17,16 @@ class DefaultDeliveryDateService(
   implicit val system: ActorSystem[_])
     extends DeliveryDateService {
 
-  private val log = LoggerFactory.getLogger(this.getClass)
-
   private implicit val askTimeout: Timeout = Timeout(5.seconds)
 
-  override def upsertDeliveryDate(
+  override def updateDeliveryDate(
     packageId: UUID,
-    updatedDate: Instant
+    eventId: Int
   ): Future[String] = {
     clusterSharding
       .entityRefFor(DeliveryDateEntity.TypeKey, packageId.toString)
       .ask[Reply] { ref =>
-        UpdateDeliveryDate(packageId, updatedDate, ref)
+        UpdateDeliveryDate(packageId, eventId, ref)
       }
       .map {
         case UpdateSuccessful(packageId) => s"Update for packageId: $packageId was successful."

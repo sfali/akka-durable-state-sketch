@@ -6,20 +6,19 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.generic.auto._
 import service.DeliveryDateService
 
-import java.time.Instant
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class Routes(deliveryDateService: DeliveryDateService) {
 
-  private final case class UpdatedDate(updatedDate: Instant)
+  private final case class MockedExternalEvent(eventId: Int)
 
   private def processEvent(
     packageId: UUID,
-    updatedDate: Instant
+    eventId: Int
   ): Future[String] = {
-    deliveryDateService.upsertDeliveryDate(packageId, updatedDate)
+    deliveryDateService.updateDeliveryDate(packageId, eventId)
   }
 
   private def retrieveDeliveryDate(packageId: UUID): Future[String] = {
@@ -33,9 +32,9 @@ class Routes(deliveryDateService: DeliveryDateService) {
     pathPrefix("packageId") {
       path(Segment) { packageId =>
         put {
-          entity(as[UpdatedDate]) { request =>
+          entity(as[MockedExternalEvent]) { request =>
             onSuccess(
-              processEvent(UUID.fromString(packageId), request.updatedDate)
+              processEvent(UUID.fromString(packageId), request.eventId)
             ) { response =>
               complete(s"$response")
             }

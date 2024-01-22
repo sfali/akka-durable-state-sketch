@@ -26,7 +26,7 @@ object DeliveryDateEntity {
   sealed trait Command
   final case class UpdateDeliveryDate(
     packageId: UUID,
-    updatedDate: Instant,
+    eventId: Int,
     replyTo: ActorRef[Reply])
       extends Command
 
@@ -54,24 +54,26 @@ object DeliveryDateEntity {
       ),
       commandHandler = (state, command) =>
         command match {
-          case UpdateDeliveryDate(packageId, updatedDate, replyTo) =>
-            // TODO add eventId to command, remove updatedDate, the rule engine should take the current date and return
-            // a validated new date
-            DeliveryDateRuleEngine
-              .evaluate(1234, state.recentEventId, Some(updatedDate)) match {
+          case UpdateDeliveryDate(packageId, eventId, replyTo) =>
+            DeliveryDateRuleEngine.evaluate(eventId, state) match {
               case Valid(validatedDate) =>
-                replyTo ! UpdateSuccessful(packageId)
-                Effect.persist(
-                  DeliveryDateState(
-                    packageId,
-                    Some(1234),
-                    Some(validatedDate),
-                    Instant.now()
+                Effect
+                  .persist(
+                    DeliveryDateState(
+                      packageId,
+                      Some(eventId),
+                      Some(validatedDate),
+                      Instant.now()
+                    )
                   )
-                )
+                  .thenReply(replyTo)(_ => UpdateSuccessful(packageId))
               case Invalid(e) =>
-                replyTo ! UpdateFailed(packageId, reason = e.toString())
-                Effect.none
+                Effect
+                  .none
+                  .thenReply(replyTo)(_ =>
+                    UpdateFailed(packageId, reason = e.toString())
+                  )
+
             }
 
           case GetDeliveryDate(packageId, replyTo) =>

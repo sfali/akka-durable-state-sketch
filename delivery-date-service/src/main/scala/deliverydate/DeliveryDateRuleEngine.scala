@@ -2,17 +2,18 @@ package deliverydate
 
 import cats.data.ValidatedNel
 import cats.implicits._
+import deliverydate.DeliveryDateEntity.DeliveryDateState
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
+// TODO doesnt update old event, treats everything as new
 object DeliveryDateRuleEngine {
   def evaluate(
     newEventId: Int,
-    maybeCurrentEventId: Option[Int],
-    maybeCurrentDeliveryDate: Option[Instant]
+    state: DeliveryDateState
   ): ValidatedNel[String, Instant] = {
-    (maybeCurrentDeliveryDate, maybeCurrentEventId) match {
+    (state.deliveryDate, state.recentEventId) match {
       case (Some(currentDeliveryDate), Some(currentEventId)) =>
         if (currentEventId == 2525 || currentEventId == 3535) {
           // No further updates allowed after consuming 2525/3535 event. Use current date.

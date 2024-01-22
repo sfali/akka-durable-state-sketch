@@ -36,13 +36,22 @@ object DeliveryDateServiceKafkaAdapter {
 
     Consumer
       .plainSource(consumerSettings, Subscriptions.topics(topic))
-      .map(record => decode[ExternalEvent](record.value()))
+      .map(record => {
+        decode[ExternalEvent](record.value())
+      })
+      // Uncomment for debugging
+//      .flatMapConcat {
+//        case Left(error) =>
+//          log.error(s"Failed to parse external event due to: $error")
+//          Source.empty
+//        case Right(event) => Source.single(event)
+//      }
       .collect { case Right(event) => event }
       .mapAsync(4) { event =>
         deliveryDateService
-          .upsertDeliveryDate(
+          .updateDeliveryDate(
             UUID.fromString(event.packageId),
-            event.deliveryDate
+            event.eventId
           )
           .recover { case ex: Throwable =>
             s"DeliveryDateService failed to process event due to ${ex.getMessage}"
