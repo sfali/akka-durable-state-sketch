@@ -2,12 +2,11 @@ package adapters.kafka
 
 import akka.actor.typed.ActorSystem
 import akka.kafka.scaladsl.Consumer
-import akka.kafka.{ ConsumerSettings, Subscriptions }
+import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.scaladsl._
 import deliverydate.ExternalEvent
 import io.circe.generic.auto._
 import io.circe.parser._
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization._
 import org.slf4j.LoggerFactory
 import service.DeliveryDateService
