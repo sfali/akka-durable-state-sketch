@@ -3,8 +3,8 @@ package deliverydate
 import akka.actor.typed.ActorRef
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{DurableStateBehavior, Effect}
-import cats.data.Validated.{Invalid, Valid}
+import akka.persistence.typed.state.scaladsl.{ DurableStateBehavior, Effect }
+import cats.data.Validated.{ Invalid, Valid }
 import org.slf4j.LoggerFactory
 
 import java.time.Instant
@@ -55,9 +55,10 @@ object DeliveryDateEntity {
       commandHandler = (state, command) =>
         command match {
           case UpdateDeliveryDate(packageId, updatedDate, replyTo) =>
-            // TODO, the UpdateDeliveryDate command wont have the new date, thats determined in the rule engine
-            // also pass in state
-            DeliveryDateRuleEngine.evaluate(1234, Some(updatedDate)) match {
+            // TODO add eventId to command, remove updatedDate, the rule engine should take the current date and return
+            // a validated new date
+            DeliveryDateRuleEngine
+              .evaluate(1234, state.recentEventId, Some(updatedDate)) match {
               case Valid(validatedDate) =>
                 replyTo ! UpdateSuccessful(packageId)
                 Effect.persist(

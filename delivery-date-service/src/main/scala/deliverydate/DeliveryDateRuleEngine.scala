@@ -6,24 +6,32 @@ import cats.implicits._
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-// TODO add state so we can check previous consumed eventId
 object DeliveryDateRuleEngine {
   def evaluate(
-    eventId: Int,
-    currentDeliveryDate: Option[Instant]
+    newEventId: Int,
+    maybeCurrentEventId: Option[Int],
+    maybeCurrentDeliveryDate: Option[Instant]
   ): ValidatedNel[String, Instant] = {
-    currentDeliveryDate match {
-      case Some(deliveryDate) =>
-        if (eventId == 1234) {
-          deliveryDate.plus(3, ChronoUnit.DAYS).validNel
-        } else if (0 <= eventId && eventId <= 1000) {
-          deliveryDate.plus(5, ChronoUnit.DAYS).validNel
-        } else if (eventId > 1000 && eventId <= 5000) {
-          deliveryDate.plus(10, ChronoUnit.DAYS).validNel
+    (maybeCurrentDeliveryDate, maybeCurrentEventId) match {
+      case (Some(currentDeliveryDate), Some(currentEventId)) =>
+        if (currentEventId == 2525 || currentEventId == 3535) {
+          // No further updates allowed after consuming 2525/3535 event. Use current date.
+          currentDeliveryDate.validNel
         } else {
-          "EventId outside valid range [0, 5000]".invalidNel
+          process(newEventId)
         }
-      case None => Instant.now().plus(30, ChronoUnit.DAYS).validNel
+      case (None, None) =>
+        process(newEventId)
+    }
+  }
+
+  private def process(newEventId: Int): ValidatedNel[String, Instant] = {
+    if (0 <= newEventId && newEventId <= 1000) {
+      Instant.now.plus(5, ChronoUnit.DAYS).validNel
+    } else if (newEventId > 1000 && newEventId <= 5000) {
+      Instant.now.plus(10, ChronoUnit.DAYS).validNel
+    } else {
+      "EventId outside valid range [0, 5000]".invalidNel
     }
   }
 }
