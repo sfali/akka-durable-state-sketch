@@ -8,9 +8,12 @@ import java.time.temporal.ChronoUnit
 
 // TODO add state so we can check previous consumed eventId
 object DeliveryDateRuleEngine {
-  def evaluate(eventId: Int, currentDeliveryDate: Option[Instant]): ValidatedNel[String, Instant] = {
+  def evaluate(
+    eventId: Int,
+    currentDeliveryDate: Option[Instant]
+  ): ValidatedNel[String, Instant] = {
     currentDeliveryDate match {
-      case Some(deliveryDate) => {
+      case Some(deliveryDate) =>
         if (eventId == 1234) {
           deliveryDate.plus(3, ChronoUnit.DAYS).validNel
         } else if (0 <= eventId && eventId <= 1000) {
@@ -20,7 +23,6 @@ object DeliveryDateRuleEngine {
         } else {
           "EventId outside valid range [0, 5000]".invalidNel
         }
-      }
       case None => Instant.now().plus(30, ChronoUnit.DAYS).validNel
     }
   }
