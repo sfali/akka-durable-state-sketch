@@ -1,22 +1,16 @@
 package service
 
 import akka.actor.typed.ActorSystem
-import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, EntityTypeKey }
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityTypeKey}
 import akka.util.Timeout
 import deliverydate.DeliveryDateEntity
-import deliverydate.DeliveryDateEntity.{
-  DeliveryDate,
-  GetDeliveryDate,
-  Reply,
-  UpdateDeliveryDate,
-  UpdateSuccessful
-}
+import deliverydate.DeliveryDateEntity.{DeliveryDate, GetDeliveryDate, Reply, UpdateDeliveryDate, UpdateFailed, UpdateSuccessful}
 import org.slf4j.LoggerFactory
 
 import java.time.Instant
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultDeliveryDateService(
   clusterSharding: ClusterSharding
@@ -37,8 +31,10 @@ class DefaultDeliveryDateService(
       .ask[Reply] { ref =>
         UpdateDeliveryDate(packageId, updatedDate, ref)
       }
-      .map { reply =>
-        reply.toString
+      .map {
+        case UpdateSuccessful(packageId) => s"Update for packageId: $packageId was successful."
+        case UpdateFailed(packageId, reason) => s"Update failed for: $packageId due to: $reason"
+        case _ => s"Unexpected reply from DeliveryDateService."
       }
   }
 
