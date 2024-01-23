@@ -7,7 +7,6 @@ import deliverydate.DeliveryDateEntity.DeliveryDateState
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-// TODO doesnt update old event, treats everything as new
 object DeliveryDateRuleEngine {
   def evaluate(
     newEventId: Int,
@@ -19,21 +18,41 @@ object DeliveryDateRuleEngine {
           // No further updates allowed after consuming 2525/3535 event. Use current date.
           currentDeliveryDate.validNel
         } else {
-          process(newEventId)
+          process(newEventId, Some(currentDeliveryDate))
         }
       case (None, None) =>
-        process(newEventId)
+        process(newEventId, None)
       case _ => "Unable to calculate DeliveryDate".invalidNel
     }
   }
 
-  private def process(newEventId: Int): ValidatedNel[String, Instant] = {
-    if (0 <= newEventId && newEventId <= 1000) {
-      Instant.now.plus(5, ChronoUnit.DAYS).validNel
-    } else if (newEventId > 1000 && newEventId <= 5000) {
-      Instant.now.plus(10, ChronoUnit.DAYS).validNel
-    } else {
-      "EventId outside valid range [0, 5000]".invalidNel
+  /*
+    Based on business rules if a package has received it's first ever event scan then the Delivery Date is 30 days
+    from now.  Any further scans between [0, 1000] bring the date closer by 5 days, scans between [1001, 5000]
+    bring it closer by 10. If the date is in the past then reject it.
+   */
+  private def process(
+    newEventId: Int,
+    currentDeliveryDate: Option[Instant]
+  ): ValidatedNel[String, Instant] = {
+    currentDeliveryDate match {
+      case Some(date) =>
+        val updatedDate =
+          if (0 <= newEventId && newEventId <= 1000) {
+            date.minus(5, ChronoUnit.DAYS)
+          } else if (newEventId > 1000 && newEventId <= 5000) {
+            date.minus(10, ChronoUnit.DAYS)
+          } else {
+            date
+          }
+
+        // Ensure that new updatedDate DeliveryDate is sooner than previous one, but also exists in the future
+        if (updatedDate.isBefore(date) && updatedDate.isAfter(Instant.now())) {
+          updatedDate.validNel
+        } else {
+          "Invalid DeliveryDate generated".invalidNel
+        }
+      case None => Instant.now().plus(30, ChronoUnit.DAYS).validNel
     }
   }
 }
