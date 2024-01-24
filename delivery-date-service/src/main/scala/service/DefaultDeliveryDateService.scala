@@ -9,7 +9,7 @@ import deliverydate.DeliveryDateEntity._
 import java.time.Instant
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class DefaultDeliveryDateService(
   clusterSharding: ClusterSharding
@@ -29,20 +29,28 @@ class DefaultDeliveryDateService(
         UpdateDeliveryDate(packageId, eventId, ref)
       }
       .map {
-        case UpdateSuccessful(packageId) => s"Update for packageId: $packageId was successful."
-        case UpdateFailed(packageId, reason) => s"Update failed for: $packageId due to: $reason"
+        case UpdateSuccessful(packageId) =>
+          s"Update for packageId: $packageId was successful."
+        case UpdateFailed(packageId, reason) =>
+          s"Update failed for: $packageId due to: $reason"
         case _ => s"Unexpected reply from DeliveryDateService."
+      }
+      .recover { ex =>
+        s"Failed to update delivery date for packageId: $packageId due to: ${ex.getMessage}"
       }
   }
 
-  override def getDeliveryDate(packageId: UUID): Future[Option[Instant]] = {
+  override def getDeliveryDateState(packageId: UUID): Future[String] = {
     clusterSharding
       .entityRefFor(DeliveryDateEntity.TypeKey, packageId.toString)
-      .ask[DeliveryDate] { ref =>
-        GetDeliveryDate(packageId, ref)
+      .ask[DeliveryDateState] { ref =>
+        GetDeliveryDateState(packageId, ref)
       }
       .map { reply =>
-        reply.deliveryDate
+        s"Current state for packageId: $packageId deliveryDate: ${reply.deliveryDate} eventId: ${reply.recentEventId} history: ${reply.eventLog}"
+      }
+      .recover { ex =>
+        s"Failed to get state for packageId: $packageId due to: ${ex.getMessage}"
       }
   }
 }

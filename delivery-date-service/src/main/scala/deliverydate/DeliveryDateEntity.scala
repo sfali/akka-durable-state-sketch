@@ -3,8 +3,8 @@ package deliverydate
 import akka.actor.typed.ActorRef
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{DurableStateBehavior, Effect}
-import cats.data.Validated.{Invalid, Valid}
+import akka.persistence.typed.state.scaladsl.{ DurableStateBehavior, Effect }
+import cats.data.Validated.{ Invalid, Valid }
 
 import java.time.Instant
 import java.util.UUID
@@ -18,7 +18,8 @@ object DeliveryDateEntity {
     packageId: UUID,
     recentEventId: Option[Int],
     deliveryDate: Option[Instant],
-    updated: Instant)
+    updated: Instant,
+    eventLog: List[String])
 
   sealed trait Command
   final case class UpdateDeliveryDate(
@@ -27,9 +28,9 @@ object DeliveryDateEntity {
     replyTo: ActorRef[Reply])
       extends Command
 
-  final case class GetDeliveryDate(
+  final case class GetDeliveryDateState(
     packageId: UUID,
-    replyTo: ActorRef[DeliveryDate])
+    replyTo: ActorRef[DeliveryDateState])
       extends Command
 
   trait Reply
@@ -47,20 +48,26 @@ object DeliveryDateEntity {
         packageId = packageId,
         recentEventId = None,
         deliveryDate = None,
-        updated = Instant.now()
+        updated = Instant.now(),
+        eventLog = List.empty
       ),
       commandHandler = (state, command) =>
         command match {
           case UpdateDeliveryDate(packageId, eventId, replyTo) =>
             DeliveryDateRuleEngine.evaluate(eventId, state) match {
               case Valid(validatedDate) =>
+                val processTime = Instant.now()
+                val eventDescription =
+                  s"eventId: $eventId processedAt: $processTime updated date: $validatedDate"
+
                 Effect
                   .persist(
                     DeliveryDateState(
                       packageId,
                       Some(eventId),
                       Some(validatedDate),
-                      Instant.now()
+                      processTime,
+                      eventLog = state.eventLog :+ eventDescription
                     )
                   )
                   .thenReply(replyTo)(_ => UpdateSuccessful(packageId))
@@ -73,8 +80,8 @@ object DeliveryDateEntity {
 
             }
 
-          case GetDeliveryDate(packageId, replyTo) =>
-            replyTo ! DeliveryDate(packageId, state.deliveryDate)
+          case GetDeliveryDateState(_, replyTo) =>
+            replyTo ! state
             Effect.none
         }
     )
