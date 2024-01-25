@@ -2,16 +2,16 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.13.12"
 
-lazy val AkkaVersion = "2.8.0"
+lazy val AkkaVersion = "2.9.1"
 lazy val SlickVersion = "3.4.1"
 lazy val AkkaManagementVersion = "1.1.3"
 lazy val akkaHttpVersion = "10.2.7"
 lazy val circeVersion = "0.14.1"
 
-
 lazy val root = (project in file("."))
   .settings(
     name := "delivery-date-service",
+    resolvers += "Akka Repository" at "https://repo.akka.io/maven/",
     libraryDependencies ++= Seq(
 //      "org.typelevel" %% "cats-core" % "2.9.0",
       "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
@@ -24,9 +24,13 @@ lazy val root = (project in file("."))
       "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % AkkaManagementVersion,
       "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
       "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
+      "com.lightbend.akka" %% "akka-projection-durable-state" % "1.5.1", // TOOD need this still?
+      "com.lightbend.akka" %% "akka-projection-eventsourced" % "1.5.1",
+      "com.lightbend.akka" %% "akka-projection-jdbc" % "1.5.1",
 //      "org.apache.kafka" %% "kafka-clients" % AkkaVersion,
+
       "org.typelevel" %% "cats-core" % "2.9.0",
-      "com.typesafe.akka" %% "akka-stream-kafka" % "3.0.0",
+      "com.typesafe.akka" %% "akka-stream-kafka" % "4.0.0",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,

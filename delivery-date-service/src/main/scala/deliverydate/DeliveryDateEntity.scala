@@ -5,6 +5,9 @@ import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.state.scaladsl.{ DurableStateBehavior, Effect }
 import cats.data.Validated.{ Invalid, Valid }
+import akka.persistence.typed.state.scaladsl.DurableStateBehavior
+import akka.persistence.typed.state.scaladsl.ChangeEventHandler
+
 
 import java.time.Instant
 import java.util.UUID
@@ -20,6 +23,10 @@ object DeliveryDateEntity {
     deliveryDate: Option[Instant],
     updated: Instant,
     eventLog: List[String])
+
+  // TODO Add real event after kafka egress testing done and projection mechanism works
+  sealed trait Event
+  final case class SomethingHappened(event: String) extends Event
 
   sealed trait Command
   final case class UpdateDeliveryDate(
@@ -38,6 +45,17 @@ object DeliveryDateEntity {
   final case class UpdateFailed(packageId: UUID, reason: String) extends Reply
   final case class DeliveryDate(packageId: UUID, deliveryDate: Option[Instant])
       extends Reply
+
+
+  // This is typed to a very specific command, is that allowed?
+  // Having a GET as a request kind of breaks this api, I dont want to emit and event into the journal on that
+  private val stateChangeEventHandler = ChangeEventHandler[Command, DeliveryDateState, Event](
+    updateHandler = {
+      case (_, _, UpdateDeliveryDate(_, eventId, _)) => SomethingHappened(s"$eventId was processed.")
+      case (_, _, GetDeliveryDateState(_, _)) => SomethingHappened(s"get request was made.")
+    },
+    deleteHandler = { (_, _) => SomethingHappened("I dont know what this is") }
+  )
 
   def apply(
     packageId: UUID
@@ -84,6 +102,6 @@ object DeliveryDateEntity {
             replyTo ! state
             Effect.none
         }
-    )
+    ).withChangeEventHandler(stateChangeEventHandler)
   }
 }
