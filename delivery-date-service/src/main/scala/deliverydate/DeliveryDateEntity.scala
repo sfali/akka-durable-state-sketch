@@ -3,11 +3,8 @@ package deliverydate
 import akka.actor.typed.ActorRef
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{ DurableStateBehavior, Effect }
-import cats.data.Validated.{ Invalid, Valid }
-import akka.persistence.typed.state.scaladsl.DurableStateBehavior
-import akka.persistence.typed.state.scaladsl.ChangeEventHandler
-
+import akka.persistence.typed.state.scaladsl.{ChangeEventHandler, DurableStateBehavior, Effect}
+import cats.data.Validated.{Invalid, Valid}
 
 import java.time.Instant
 import java.util.UUID
@@ -47,8 +44,10 @@ object DeliveryDateEntity {
       extends Reply
 
 
+  // TODO:
   // This is typed to a very specific command, is that allowed?
   // Having a GET as a request kind of breaks this api, I dont want to emit and event into the journal on that
+  // How does this know where to write it to?
   private val stateChangeEventHandler = ChangeEventHandler[Command, DeliveryDateState, Event](
     updateHandler = {
       case (_, _, UpdateDeliveryDate(_, eventId, _)) => SomethingHappened(s"$eventId was processed.")

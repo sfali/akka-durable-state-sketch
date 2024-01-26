@@ -1,11 +1,12 @@
-import adapters.http.{ DeliveryDateHttpServer, Routes }
-import adapters.kafka.DeliveryDateServiceKafkaAdapter
+import adapters.http.{DeliveryDateHttpServer, Routes}
+import adapters.kafka.{DeliveryDateServiceKafkaAdapter, StateEventProjectionSketch}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ ActorSystem, Behavior }
-import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, Entity }
+import akka.actor.typed.{ActorSystem, Behavior}
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
 import deliverydate.DeliveryDateEntity
-import deliverydate.DeliveryDateEntity.{ Command, TypeKey }
+import deliverydate.DeliveryDateEntity.{Command, TypeKey}
 import service.DefaultDeliveryDateService
+import slick.jdbc.JdbcBackend.Database
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,6 +34,9 @@ object DeliveryDateApp {
         port = 1234,
         system
       )
+
+      val database = Database.forConfig("???")
+      StateEventProjectionSketch.startProjectionToKafka(database)
 
       DeliveryDateServiceKafkaAdapter.consumeEventsFromKafka(
         deliveryDateService,
