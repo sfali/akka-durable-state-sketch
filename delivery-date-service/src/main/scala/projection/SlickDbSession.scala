@@ -1,9 +1,8 @@
-package adapters.kafka
+package projection
 
 import akka.japi.function.Function
 import akka.projection.jdbc.JdbcSession
-import slick.jdbc.JdbcBackend.Database
-import slick.jdbc.JdbcBackend.Session
+import slick.jdbc.JdbcBackend.{Database, Session}
 
 import java.sql.Connection
 

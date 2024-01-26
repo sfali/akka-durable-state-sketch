@@ -1,4 +1,4 @@
-package adapters.kafka
+package projection
 
 import akka.Done
 import akka.actor.typed.ActorSystem

@@ -1,4 +1,4 @@
-package adapters.kafka
+package projection
 
 import akka.actor.typed.ActorSystem
 import akka.kafka.ProducerSettings
@@ -8,16 +8,16 @@ import akka.persistence.query.Offset
 import akka.persistence.query.typed.{EventEnvelope => QueryEventEnvelope}
 import akka.projection.ProjectionId
 import akka.projection.eventsourced.scaladsl.EventSourcedProvider
+import akka.projection.jdbc.scaladsl.JdbcProjection
 import akka.projection.scaladsl.SourceProvider
 import deliverydate.DeliveryDateEntity.Event
 import org.apache.kafka.common.serialization.StringSerializer
 import slick.jdbc.JdbcBackend.Database
-import akka.projection.jdbc.scaladsl.JdbcProjection
 
 // TODO This should be elsewhere its not an adapter
 object StateEventProjectionSketch {
 
-  def startProjectionToKafka(database: Database)(implicit system: ActorSystem[_]) {
+  def startProjectionToKafka(database: Database)(implicit system: ActorSystem[_]): Unit = {
 
     val numberOfSliceRanges: Int = 4
 
