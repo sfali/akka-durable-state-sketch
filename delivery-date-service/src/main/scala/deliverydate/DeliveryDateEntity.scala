@@ -3,8 +3,12 @@ package deliverydate
 import akka.actor.typed.ActorRef
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{ChangeEventHandler, DurableStateBehavior, Effect}
-import cats.data.Validated.{Invalid, Valid}
+import akka.persistence.typed.state.scaladsl.{
+  ChangeEventHandler,
+  DurableStateBehavior,
+  Effect
+}
+import cats.data.Validated.{ Invalid, Valid }
 
 import java.time.Instant
 import java.util.UUID
@@ -21,9 +25,14 @@ object DeliveryDateEntity {
     updated: Instant,
     eventLog: List[String])
 
-  // TODO Add real event after kafka egress testing done and projection mechanism works
-  sealed trait Event
-  final case class SomethingHappened(event: String) extends Event
+  // Events need the packageId as it will be used to key the kafka projection
+  sealed trait Event {
+    val packageId: UUID
+  }
+  // TODO Replace once functioning better understood
+  final case class SomethingHappened(id: UUID, event: String) extends Event {
+    override val packageId: UUID = id
+  }
 
   sealed trait Command
   final case class UpdateDeliveryDate(
@@ -43,18 +52,25 @@ object DeliveryDateEntity {
   final case class DeliveryDate(packageId: UUID, deliveryDate: Option[Instant])
       extends Reply
 
-
   // TODO:
   // This is typed to a very specific command, is that allowed?
   // Having a GET as a request kind of breaks this api, I dont want to emit and event into the journal on that
   // How does this know where to write it to?
-  private val stateChangeEventHandler = ChangeEventHandler[Command, DeliveryDateState, Event](
-    updateHandler = {
-      case (_, _, UpdateDeliveryDate(_, eventId, _)) => SomethingHappened(s"$eventId was processed.")
-      case (_, _, GetDeliveryDateState(_, _)) => SomethingHappened(s"get request was made.")
-    },
-    deleteHandler = { (_, _) => SomethingHappened("I dont know what this is") }
-  )
+  private val stateChangeEventHandler =
+    ChangeEventHandler[Command, DeliveryDateState, Event](
+      updateHandler = {
+        case (_, _, UpdateDeliveryDate(packageId, eventId, _)) =>
+          SomethingHappened(packageId, s"$eventId was processed.")
+        case (_, _, GetDeliveryDateState(packageId, _)) =>
+          SomethingHappened(
+            packageId,
+            s"get request was made."
+          ) // I dont want this
+      },
+      deleteHandler = { (state, _) =>
+        SomethingHappened(state.packageId, "I dont know what this is")
+      }
+    )
 
   def apply(
     packageId: UUID

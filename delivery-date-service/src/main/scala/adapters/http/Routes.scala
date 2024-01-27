@@ -7,7 +7,6 @@ import io.circe.generic.auto._
 import service.DeliveryDateService
 
 import java.util.UUID
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class Routes(deliveryDateService: DeliveryDateService) {
@@ -21,11 +20,8 @@ class Routes(deliveryDateService: DeliveryDateService) {
     deliveryDateService.updateDeliveryDate(packageId, eventId)
   }
 
-  private def retrieveDeliveryDate(packageId: UUID): Future[String] = {
-    deliveryDateService.getDeliveryDate(packageId).map {
-      case Some(date) => s"PackageId: $packageId has delivery date: $date"
-      case None => s"PackageId: $packageId has not had an initial delivery date"
-    }
+  private def retrieveDeliveryDateState(packageId: UUID): Future[String] = {
+    deliveryDateService.getDeliveryDateState(packageId)
   }
 
   val routes: Route = {
@@ -41,7 +37,7 @@ class Routes(deliveryDateService: DeliveryDateService) {
           }
         } ~
           get {
-            onSuccess(retrieveDeliveryDate(UUID.fromString(packageId))) {
+            onSuccess(retrieveDeliveryDateState(UUID.fromString(packageId))) {
               response =>
                 complete(s"$response")
             }
