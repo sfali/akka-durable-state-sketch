@@ -1,6 +1,6 @@
 package deliverydate
 
-import akka.actor.typed.ActorRef
+import akka.actor.typed.{ ActorRef, SupervisorStrategy }
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.state.scaladsl.{
@@ -12,6 +12,7 @@ import cats.data.Validated.{ Invalid, Valid }
 
 import java.time.Instant
 import java.util.UUID
+import scala.concurrent.duration.DurationInt
 
 object DeliveryDateEntity {
 
@@ -117,6 +118,10 @@ object DeliveryDateEntity {
             replyTo ! state
             Effect.none
         }
-    ).withChangeEventHandler(stateChangeEventHandler)
+    )
+      .withChangeEventHandler(stateChangeEventHandler)
+      .onPersistFailure(
+        SupervisorStrategy.restartWithBackoff(200.millis, 5.seconds, 0.1)
+      )
   }
 }

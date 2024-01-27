@@ -3,15 +3,14 @@ package projection
 import akka.actor.typed.ActorSystem
 import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.SendProducer
-import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
-import akka.persistence.query.Offset
-import akka.persistence.query.DurableStateChange
+import akka.persistence.jdbc.state.scaladsl.JdbcDurableStateStore
+//import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
+import akka.persistence.query.{DurableStateChange, Offset}
 import akka.projection.ProjectionId
+import akka.projection.jdbc.scaladsl.JdbcProjection
 import akka.projection.scaladsl.SourceProvider
 import akka.projection.state.scaladsl.DurableStateSourceProvider
-import akka.projection.jdbc.scaladsl.JdbcProjection
 import deliverydate.DeliveryDateEntity
-import deliverydate.DeliveryDateEntity.Event
 import org.apache.kafka.common.serialization.StringSerializer
 import slick.jdbc.JdbcBackend.Database
 
@@ -27,19 +26,21 @@ object StateEventProjectionSketch {
   )(implicit system: ActorSystem[_]
   ): Unit = {
 
-    val sourceProvider: SourceProvider[Offset, DurableStateChange[DeliveryDateEntity.Event]] = {
+
+    val sourceProvider
+      : SourceProvider[Offset, DurableStateChange[DeliveryDateEntity.Event]] = {
       // This appears to be reading the journal and looking back how far the events go
       // and creating a slice range to process? so min/max is all?
       val sliceRanges: Seq[Range] =
-      DurableStateSourceProvider.sliceRanges(
+        DurableStateSourceProvider.sliceRanges(
           system,
-          JdbcReadJournal.Identifier,
+          durableStateStoreQueryPluginId = JdbcDurableStateStore.Identifier,
           numberOfSliceRanges
         )
 
       DurableStateSourceProvider.changesBySlices[DeliveryDateEntity.Event](
         system,
-        JdbcReadJournal.Identifier,
+        durableStateStoreQueryPluginId = JdbcDurableStateStore.Identifier,
         entityType,
         sliceRanges.head.min,
         sliceRanges.head.max
@@ -54,6 +55,7 @@ object StateEventProjectionSketch {
       SendProducer(producerSettings)
     }
 
+    // What is the ID for this?  How does it connect to the DeliveryDate entity?
     JdbcProjection.atLeastOnceAsync(
       projectionId = ProjectionId("DeliveryDateProjection", "DeliveryDate"),
       sourceProvider,

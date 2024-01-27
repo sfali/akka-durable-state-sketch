@@ -19,7 +19,7 @@ class EventsProjectionHandlerSketch(
   private implicit val ec: ExecutionContext =
     system.executionContext
 
-  private val log = LoggerFactory.getLogger(getClass)
+  private val log = LoggerFactory.getLogger(this.getClass)
 
   override def process(
     envelope: DurableStateChange[DeliveryDateEntity.Event]
