@@ -6,7 +6,6 @@ import slick.jdbc.JdbcBackend.{Database, Session}
 
 import java.sql.Connection
 
-// TODO Find other spot for this
 class SlickDbSession(db: Database) extends JdbcSession {
   private var currentSession: Option[Session] = None
 

@@ -41,7 +41,7 @@ object DeliveryDateApp {
         system
       )
 
-      val database = Database.forConfig("???")
+      val database = Database.forConfig("slick.db")
       StateEventProjectionSketch.startProjectionToKafka(database)
 
       Behaviors.empty

@@ -5,49 +5,49 @@ import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.SendProducer
 import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
 import akka.persistence.query.Offset
-import akka.persistence.query.typed.{EventEnvelope => QueryEventEnvelope}
+import akka.persistence.query.DurableStateChange
 import akka.projection.ProjectionId
-import akka.projection.eventsourced.scaladsl.EventSourcedProvider
-import akka.projection.jdbc.scaladsl.JdbcProjection
 import akka.projection.scaladsl.SourceProvider
+import akka.projection.state.scaladsl.DurableStateSourceProvider
+import akka.projection.jdbc.scaladsl.JdbcProjection
+import deliverydate.DeliveryDateEntity
 import deliverydate.DeliveryDateEntity.Event
 import org.apache.kafka.common.serialization.StringSerializer
 import slick.jdbc.JdbcBackend.Database
 
-// TODO This should be elsewhere its not an adapter
 object StateEventProjectionSketch {
 
-  def startProjectionToKafka(database: Database)(implicit system: ActorSystem[_]): Unit = {
+  private val numberOfSliceRanges: Int = 4
+  private val entityType: String = "DeliveryDateState"
 
-    val numberOfSliceRanges: Int = 4
+  val topic = "delivery-date-events"
 
-    val sliceRanges =
-      EventSourcedProvider.sliceRanges(
-        system,
-        JdbcReadJournal.Identifier,
-        numberOfSliceRanges
-      )
+  def startProjectionToKafka(
+    database: Database
+  )(implicit system: ActorSystem[_]
+  ): Unit = {
 
-    val minSlice: Int = sliceRanges.head.min
-    val maxSlice: Int = sliceRanges.head.max
-    // TODO is this right?
-    val entityType: String = "DeliveryDateState"
+    val sourceProvider: SourceProvider[Offset, DurableStateChange[DeliveryDateEntity.Event]] = {
+      // This appears to be reading the journal and looking back how far the events go
+      // and creating a slice range to process? so min/max is all?
+      val sliceRanges: Seq[Range] =
+      DurableStateSourceProvider.sliceRanges(
+          system,
+          JdbcReadJournal.Identifier,
+          numberOfSliceRanges
+        )
 
-    val topic = "delivery-date-events"
-
-    val sourceProvider
-    : SourceProvider[Offset, QueryEventEnvelope[Event]] = {
-      EventSourcedProvider.eventsBySlices[Event](
+      DurableStateSourceProvider.changesBySlices[DeliveryDateEntity.Event](
         system,
         JdbcReadJournal.Identifier,
         entityType,
-        minSlice,
-        maxSlice
+        sliceRanges.head.min,
+        sliceRanges.head.max
       )
     }
 
     val sendProducer: SendProducer[String, String] = {
-      val producerSettings: ProducerSettings[String, String] =
+      val producerSettings =
         ProducerSettings(system, new StringSerializer, new StringSerializer)
           .withBootstrapServers("localhost:9092")
 
