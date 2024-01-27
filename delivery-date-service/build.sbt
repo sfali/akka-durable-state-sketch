@@ -35,7 +35,7 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "ch.qos.logback" % "logback-classic" % "1.4.7",
-      "com.typesafe.akka" %% "akka-discovery" % "2.8.0",
+      "com.typesafe.akka" %% "akka-discovery" % AkkaVersion,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
       "org.scalatest" %% "scalatest" % "3.2.15" % Test,
       "com.lightbend.akka" %% "akka-persistence-jdbc" % "5.2.0",
@@ -43,5 +43,8 @@ lazy val root = (project in file("."))
       "com.typesafe.slick" %% "slick" % SlickVersion,
       "com.typesafe.slick" %% "slick-hikaricp" % SlickVersion,
       "org.postgresql" % "postgresql" % "42.5.4",
+
+      // fixes this error: java.lang.NoClassDefFoundError: com/typesafe/sslconfig/util/LoggerFactory
+      "com.typesafe" %% "ssl-config-core" % "0.6.1"
     )
   )
