@@ -3,7 +3,7 @@ package projection
 import akka.Done
 import akka.actor.typed.ActorSystem
 import akka.kafka.scaladsl.SendProducer
-import akka.persistence.query.{DeletedDurableState, DurableStateChange, UpdatedDurableState}
+import akka.persistence.query.typed.EventEnvelope
 import akka.projection.scaladsl.Handler
 import deliverydate.DeliveryDateEntity
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -11,26 +11,25 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class EventsProjectionHandlerSketch(
+class DomainEventsProjectionHandler(
   system: ActorSystem[_],
   topic: String,
   sendProducer: SendProducer[String, String])
-    extends Handler[DurableStateChange[DeliveryDateEntity.Event]] {
+    extends Handler[EventEnvelope[DeliveryDateEntity.Event]] {
   private implicit val ec: ExecutionContext =
     system.executionContext
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
   override def process(
-    envelope: DurableStateChange[DeliveryDateEntity.Event]
+    envelope: EventEnvelope[DeliveryDateEntity.Event]
   ): Future[Done] = {
 
-    val (id, event) = envelope match {
-      case state: UpdatedDurableState[DeliveryDateEntity.Event] =>
-        state.value match {
-          case DeliveryDateEntity.SomethingHappened(id, event) => (id.toString, s"Dummy Event: $event - $id")
-        }
-      case state: DeletedDurableState[DeliveryDateEntity.Event] => (state.persistenceId, s"Dummy Event: ${state.persistenceId}")
+    // TODO only care about certain events, dont project others
+    val (id, event) = envelope.event match {
+      case DeliveryDateEntity.SomethingHappened(id, event) =>
+        log.info("*** DWL SomethingHappened...")
+        (id.toString, event)
     }
 
     val producerRecord = new ProducerRecord(topic, id, event)
