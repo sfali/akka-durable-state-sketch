@@ -1,20 +1,20 @@
 package deliverydate
 
-import akka.actor.typed.{ ActorRef, SupervisorStrategy }
+import akka.actor.typed.{ActorRef, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{
-  ChangeEventHandler,
-  DurableStateBehavior,
-  Effect
-}
-import cats.data.Validated.{ Invalid, Valid }
+import akka.persistence.typed.state.scaladsl.{ChangeEventHandler, DurableStateBehavior, Effect}
+import cats.data.Validated.{Invalid, Valid}
+import org.slf4j.LoggerFactory
 
 import java.time.Instant
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
 
 object DeliveryDateEntity {
+
+  private val log = LoggerFactory.getLogger(this.getClass)
+
 
   val TypeKey: EntityTypeKey[DeliveryDateEntity.Command] =
     EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate")
@@ -61,12 +61,15 @@ object DeliveryDateEntity {
     ChangeEventHandler[Command, DeliveryDateState, Event](
       updateHandler = {
         case (_, _, UpdateDeliveryDate(packageId, eventId, _)) =>
+          log.info("DWL ChangeEventHandlder UpdateDeliveryDate")
           SomethingHappened(packageId, s"$eventId was processed.")
         case (_, _, GetDeliveryDateState(packageId, _)) =>
+          log.info("DWL ChangeEventHandlder GetDeliveryDateState")
+
           SomethingHappened(
             packageId,
             s"get request was made."
-          ) // I dont want this
+          ) // I dont want this. Create another event and then on the egress we dont care
       },
       deleteHandler = { (state, _) =>
         SomethingHappened(state.packageId, "I dont know what this is")
@@ -77,7 +80,7 @@ object DeliveryDateEntity {
     packageId: UUID
   ): DurableStateBehavior[Command, DeliveryDateState] = {
     DurableStateBehavior[Command, DeliveryDateState](
-      persistenceId = PersistenceId.ofUniqueId(packageId.toString),
+      persistenceId = PersistenceId(TypeKey.name, packageId.toString),
       emptyState = DeliveryDateState(
         packageId = packageId,
         recentEventId = None,

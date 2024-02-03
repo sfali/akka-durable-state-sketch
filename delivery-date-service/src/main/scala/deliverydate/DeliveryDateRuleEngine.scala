@@ -7,6 +7,7 @@ import deliverydate.DeliveryDateEntity.DeliveryDateState
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
+// TODO add some more validation steps, check that eventId is valid, maybe date?
 object DeliveryDateRuleEngine {
   def evaluate(
     newEventId: Int,

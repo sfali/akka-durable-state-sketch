@@ -5,7 +5,7 @@ import akka.actor.typed.{ActorSystem, Behavior}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
 import deliverydate.DeliveryDateEntity
 import deliverydate.DeliveryDateEntity.{Command, TypeKey}
-import projection.StateEventProjectionSketch
+import projection.DomainEventsProjectionRunner
 import service.DefaultDeliveryDateService
 import slick.jdbc.JdbcBackend.Database
 
@@ -32,17 +32,12 @@ object DeliveryDateApp {
 
       DeliveryDateHttpServer.start(
         routes = new Routes(deliveryDateService).routes,
-        port = 1234,
-        system
+        port = 1234
       )
 
-      DeliveryDateServiceKafkaAdapter.consumeEventsFromKafka(
-        deliveryDateService,
-        system
-      )
+      DeliveryDateServiceKafkaAdapter.consumeEventsFromKafka(deliveryDateService)
 
-      val database = Database.forConfig("slick.db")
-      StateEventProjectionSketch.startProjectionToKafka(database)
+      DomainEventsProjectionRunner.run
 
       Behaviors.empty
     }
