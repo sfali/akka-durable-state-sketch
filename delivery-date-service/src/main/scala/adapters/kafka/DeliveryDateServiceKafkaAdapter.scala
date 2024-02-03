@@ -19,13 +19,13 @@ object DeliveryDateServiceKafkaAdapter {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   private val groupId = "delivery-date-ingress"
+  // TODO add to config
   private val topic = "external-events"
 
   def consumeEventsFromKafka(
     deliveryDateService: DeliveryDateService,
-    actorSystem: ActorSystem[_]
-  ): Unit = {
-    implicit val system: ActorSystem[Nothing] = actorSystem
+  )(implicit system: ActorSystem[_]): Unit = {
+//    implicit val system: ActorSystem[Nothing] = actorSystem
     implicit val ec: ExecutionContextExecutor = system.executionContext
 
     val consumerSettings: ConsumerSettings[String, String] =

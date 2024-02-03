@@ -9,10 +9,10 @@ import scala.util.{Failure, Success}
 
 object DeliveryDateHttpServer {
 
-  def start(routes: Route, port: Int, system: ActorSystem[_]): Unit = {
-    import akka.actor.typed.scaladsl.adapter._
+  def start(routes: Route, port: Int)(implicit system: ActorSystem[_]): Unit = {
+//    import akka.actor.typed.scaladsl.adapter._
     import system.executionContext
-    implicit val classic: actor.ActorSystem = system.toClassic
+//    implicit val classic: actor.ActorSystem = system.toClassic
 
     Http()
       .newServerAt("localhost", port)

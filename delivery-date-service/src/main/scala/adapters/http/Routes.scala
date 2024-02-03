@@ -11,6 +11,7 @@ import scala.concurrent.Future
 
 class Routes(deliveryDateService: DeliveryDateService) {
 
+  // TODO remove PUT route
   private final case class MockedExternalEvent(eventId: Int)
 
   private def processEvent(
