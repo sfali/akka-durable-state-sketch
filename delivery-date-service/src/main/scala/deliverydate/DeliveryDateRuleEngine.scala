@@ -28,7 +28,9 @@ object DeliveryDateRuleEngine {
   }
 
   /*
-    Based on business rules if a package has received it's first ever event scan then the Delivery Date is 30 days
+    - EventId must be 4 digits in length, otherwise considered invalid.
+
+    - Based on business rules if a package has received it's first ever event scan then the Delivery Date is 30 days
     from now.  Any further scans between [0, 1000] bring the date closer by 5 days, scans between [1001, 5000]
     bring it closer by 10. If the date is in the past then reject it.
    */
