@@ -39,18 +39,4 @@ class DefaultDeliveryDateService(
         s"Failed to update delivery date for packageId: $packageId due to: ${ex.getMessage}"
       }
   }
-
-  override def getDeliveryDateState(packageId: UUID): Future[String] = {
-    clusterSharding
-      .entityRefFor(DeliveryDateEntity.TypeKey, packageId.toString)
-      .ask[DeliveryDateState] { ref =>
-        GetDeliveryDateState(packageId, ref)
-      }
-      .map { reply =>
-        s"Current state for packageId: $packageId deliveryDate: ${reply.deliveryDate} eventId: ${reply.recentEventId} history: ${reply.eventLog}"
-      }
-      .recover { ex =>
-        s"Failed to get state for packageId: $packageId due to: ${ex.getMessage}"
-      }
-  }
 }
