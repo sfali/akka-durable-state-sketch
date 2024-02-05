@@ -7,7 +7,6 @@ import deliverydate.DeliveryDateEntity.DeliveryDateState
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-// TODO add some more validation steps, check that eventId is valid, maybe date?
 object DeliveryDateRuleEngine {
   def evaluate(
     newEventId: Int,
@@ -19,10 +18,11 @@ object DeliveryDateRuleEngine {
           // No further updates allowed after consuming 2525/3535 event. Use current date.
           currentDeliveryDate.validNel
         } else {
-          process(newEventId, Some(currentDeliveryDate))
+          validateEventId(newEventId, Some(currentDeliveryDate))
         }
+
       case (None, None) =>
-        process(newEventId, None)
+        validateEventId(newEventId, None)
       case _ => "Unable to calculate DeliveryDate".invalidNel
     }
   }
@@ -32,28 +32,33 @@ object DeliveryDateRuleEngine {
     from now.  Any further scans between [0, 1000] bring the date closer by 5 days, scans between [1001, 5000]
     bring it closer by 10. If the date is in the past then reject it.
    */
-  private def process(
+  private def validateEventId(
     newEventId: Int,
     currentDeliveryDate: Option[Instant]
   ): ValidatedNel[String, Instant] = {
-    currentDeliveryDate match {
-      case Some(date) =>
-        val updatedDate =
-          if (0 <= newEventId && newEventId <= 1000) {
-            date.minus(5, ChronoUnit.DAYS)
-          } else if (newEventId > 1000 && newEventId <= 5000) {
-            date.minus(10, ChronoUnit.DAYS)
-          } else {
-            date
-          }
 
-        // Ensure that new updatedDate DeliveryDate is sooner than previous one, but also exists in the future
-        if (updatedDate.isBefore(date) && updatedDate.isAfter(Instant.now())) {
-          updatedDate.validNel
-        } else {
-          "Invalid DeliveryDate generated".invalidNel
+    newEventId.toString match {
+      case id if id.length == 4 =>
+        currentDeliveryDate match {
+          case Some(date) =>
+            val updatedDate =
+              if (0 <= newEventId && newEventId <= 1000) {
+                date.minus(5, ChronoUnit.DAYS)
+              } else if (newEventId > 1000 && newEventId <= 5000) {
+                date.minus(10, ChronoUnit.DAYS)
+              } else {
+                date
+              }
+
+            // Ensure that new updatedDate DeliveryDate is sooner than previous one, but also exists in the future
+            if (updatedDate.isBefore(date) && updatedDate.isAfter(Instant.now())) {
+              updatedDate.validNel
+            } else {
+              "Invalid DeliveryDate generated".invalidNel
+            }
+          case None => Instant.now().plus(30, ChronoUnit.DAYS).validNel
         }
-      case None => Instant.now().plus(30, ChronoUnit.DAYS).validNel
+      case _ => "Invalid EventId".invalidNel
     }
   }
 }
