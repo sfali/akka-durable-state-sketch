@@ -4,29 +4,28 @@ import akka.actor
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
+import org.slf4j.LoggerFactory
 
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 object DeliveryDateHttpServer {
 
-  def start(routes: Route, port: Int)(implicit system: ActorSystem[_]): Unit = {
-//    import akka.actor.typed.scaladsl.adapter._
-    import system.executionContext
-//    implicit val classic: actor.ActorSystem = system.toClassic
+  private val log = LoggerFactory.getLogger(this.getClass)
 
+  def start(routes: Route, port: Int)(implicit system: ActorSystem[_]): Unit = {
+    import system.executionContext
+    // TODO Config
     Http()
       .newServerAt("localhost", port)
       .bind(routes)
       .onComplete {
         case Success(binding) =>
-          system
-            .log
+          log
             .info(
-              s"\u001B[34m **** DeliveryDateHttpServer HttpServer online at " +
-                s"${binding.localAddress.getHostString}:${binding.localAddress.getPort} **** \u001B[0m"
+              s"DeliveryDateHttpServer HttpServer online at ${binding.localAddress.getHostString}:${binding.localAddress.getPort}"
             )
         case Failure(exception) =>
-          system.log.error(s"Failed to bind HTTP server $exception")
+          log.error(s"Failed to bind HTTP server $exception")
           system.terminate()
       }
   }
