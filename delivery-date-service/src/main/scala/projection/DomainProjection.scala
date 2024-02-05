@@ -51,7 +51,7 @@ object DomainProjection {
     ): SendProducer[String, String] = {
       val producerSettings =
         ProducerSettings(system, new StringSerializer, new StringSerializer)
-          .withBootstrapServers("localhost:9092")
+          .withBootstrapServers("localhost:9092") // TODO config
           .withClientId(s"egress-projection-$minSlice-$maxSlice")
           .withCloseTimeout(0.seconds)
 
