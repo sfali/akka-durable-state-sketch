@@ -1,10 +1,14 @@
 package deliverydate
 
-import akka.actor.typed.{ActorRef, SupervisorStrategy}
+import akka.actor.typed.{ ActorRef, SupervisorStrategy }
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{ChangeEventHandler, DurableStateBehavior, Effect}
-import cats.data.Validated.{Invalid, Valid}
+import akka.persistence.typed.state.scaladsl.{
+  ChangeEventHandler,
+  DurableStateBehavior,
+  Effect
+}
+import cats.data.Validated.{ Invalid, Valid }
 import org.slf4j.LoggerFactory
 
 import java.time.Instant
@@ -14,7 +18,6 @@ import scala.concurrent.duration.DurationInt
 object DeliveryDateEntity {
 
   private val log = LoggerFactory.getLogger(this.getClass)
-
 
   val TypeKey: EntityTypeKey[DeliveryDateEntity.Command] =
     EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate")
@@ -26,12 +29,15 @@ object DeliveryDateEntity {
     updated: Instant,
     eventLog: List[String])
 
-  // Events need the packageId as it will be used to key the kafka projection
   sealed trait Event {
     val packageId: UUID
   }
-  // TODO Replace once functioning better understood
-  final case class SomethingHappened(id: UUID, event: String) extends Event {
+
+  final case class DeliveryDateUpdated(id: UUID, event: String) extends Event {
+    override val packageId: UUID = id
+  }
+
+  private final case class DeliveryDateEvent(id: UUID, event: String) extends Event {
     override val packageId: UUID = id
   }
 
@@ -42,39 +48,55 @@ object DeliveryDateEntity {
     replyTo: ActorRef[Reply])
       extends Command
 
-  final case class GetDeliveryDateState(
-    packageId: UUID,
-    replyTo: ActorRef[DeliveryDateState])
-      extends Command
-
   trait Reply
   final case class UpdateSuccessful(packageId: UUID) extends Reply
   final case class UpdateFailed(packageId: UUID, reason: String) extends Reply
   final case class DeliveryDate(packageId: UUID, deliveryDate: Option[Instant])
       extends Reply
 
-  // TODO:
-  // This is typed to a very specific command, is that allowed?
-  // Having a GET as a request kind of breaks this api, I dont want to emit and event into the journal on that
-  // How does this know where to write it to?
   private val stateChangeEventHandler =
     ChangeEventHandler[Command, DeliveryDateState, Event](
       updateHandler = {
         case (_, _, UpdateDeliveryDate(packageId, eventId, _)) =>
-          log.info("DWL ChangeEventHandlder UpdateDeliveryDate")
-          SomethingHappened(packageId, s"$eventId was processed.")
-        case (_, _, GetDeliveryDateState(packageId, _)) =>
-          log.info("DWL ChangeEventHandlder GetDeliveryDateState")
-
-          SomethingHappened(
-            packageId,
-            s"get request was made."
-          ) // I dont want this. Create another event and then on the egress we dont care
+          DeliveryDateUpdated(packageId, s"$eventId was processed.")
       },
       deleteHandler = { (state, _) =>
-        SomethingHappened(state.packageId, "I dont know what this is")
+        DeliveryDateEvent(state.packageId, "Entity deleted.")
       }
     )
+
+  private val commandHandler
+    : (DeliveryDateState, Command) => Effect[DeliveryDateState] = {
+    (state, command) =>
+      command match {
+        case UpdateDeliveryDate(packageId, eventId, replyTo) =>
+          DeliveryDateRuleEngine.evaluate(eventId, state) match {
+            case Valid(validatedDate) =>
+              val processTime = Instant.now()
+              val eventDescription =
+                s"eventId: $eventId processedAt: $processTime updated date: $validatedDate"
+
+              Effect
+                .persist(
+                  DeliveryDateState(
+                    packageId,
+                    Some(eventId),
+                    Some(validatedDate),
+                    processTime,
+                    eventLog = state.eventLog :+ eventDescription
+                  )
+                )
+                .thenReply(replyTo)(_ => UpdateSuccessful(packageId))
+            case Invalid(e) =>
+              Effect
+                .none
+                .thenReply(replyTo)(_ =>
+                  UpdateFailed(packageId, reason = e.toString())
+                )
+
+          }
+      }
+  }
 
   def apply(
     packageId: UUID
@@ -88,39 +110,7 @@ object DeliveryDateEntity {
         updated = Instant.now(),
         eventLog = List.empty
       ),
-      commandHandler = (state, command) =>
-        command match {
-          case UpdateDeliveryDate(packageId, eventId, replyTo) =>
-            DeliveryDateRuleEngine.evaluate(eventId, state) match {
-              case Valid(validatedDate) =>
-                val processTime = Instant.now()
-                val eventDescription =
-                  s"eventId: $eventId processedAt: $processTime updated date: $validatedDate"
-
-                Effect
-                  .persist(
-                    DeliveryDateState(
-                      packageId,
-                      Some(eventId),
-                      Some(validatedDate),
-                      processTime,
-                      eventLog = state.eventLog :+ eventDescription
-                    )
-                  )
-                  .thenReply(replyTo)(_ => UpdateSuccessful(packageId))
-              case Invalid(e) =>
-                Effect
-                  .none
-                  .thenReply(replyTo)(_ =>
-                    UpdateFailed(packageId, reason = e.toString())
-                  )
-
-            }
-
-          case GetDeliveryDateState(_, replyTo) =>
-            replyTo ! state
-            Effect.none
-        }
+      commandHandler = commandHandler
     )
       .withChangeEventHandler(stateChangeEventHandler)
       .onPersistFailure(
