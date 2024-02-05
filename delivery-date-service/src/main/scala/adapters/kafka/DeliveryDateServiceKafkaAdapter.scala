@@ -18,19 +18,18 @@ import scala.concurrent.duration._
 object DeliveryDateServiceKafkaAdapter {
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  private val groupId = "delivery-date-ingress"
   // TODO add to config
+  private val groupId = "delivery-date-ingress"
   private val topic = "external-events"
 
   def consumeEventsFromKafka(
     deliveryDateService: DeliveryDateService,
   )(implicit system: ActorSystem[_]): Unit = {
-//    implicit val system: ActorSystem[Nothing] = actorSystem
     implicit val ec: ExecutionContextExecutor = system.executionContext
 
     val consumerSettings: ConsumerSettings[String, String] =
       ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
-        .withBootstrapServers("localhost:9092")
+        .withBootstrapServers("localhost:9092") // TODO add to config
         .withGroupId(groupId)
         .withStopTimeout(0.seconds)
 
@@ -39,13 +38,6 @@ object DeliveryDateServiceKafkaAdapter {
       .map(record => {
         decode[ExternalEvent](record.value())
       })
-      // Uncomment for debugging
-//      .flatMapConcat {
-//        case Left(error) =>
-//          log.error(s"Failed to parse external event due to: $error")
-//          Source.empty
-//        case Right(event) => Source.single(event)
-//      }
       .collect { case Right(event) => event }
       .mapAsync(4) { event =>
         deliveryDateService

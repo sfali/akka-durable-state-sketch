@@ -6,8 +6,8 @@ import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity}
 import deliverydate.DeliveryDateEntity
 import deliverydate.DeliveryDateEntity.{Command, TypeKey}
 import projection.DomainEventsProjectionRunner
+import query.DeliveryDateStateRepository
 import service.DefaultDeliveryDateService
-import slick.jdbc.JdbcBackend.Database
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,10 +29,11 @@ object DeliveryDateApp {
       })
 
       val deliveryDateService = new DefaultDeliveryDateService(clusterSharding)
+      val repo = new DeliveryDateStateRepository
 
       DeliveryDateHttpServer.start(
-        routes = new Routes(deliveryDateService).routes,
-        port = 1234
+        routes = new Routes(repo).routes,
+        port = 1234 // TODO add config
       )
 
       DeliveryDateServiceKafkaAdapter.consumeEventsFromKafka(deliveryDateService)

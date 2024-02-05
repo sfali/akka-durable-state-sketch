@@ -9,7 +9,7 @@ import deliverydate.DeliveryDateEntity
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class DomainEventsProjectionHandler(
   system: ActorSystem[_],
@@ -25,18 +25,15 @@ class DomainEventsProjectionHandler(
     envelope: EventEnvelope[DeliveryDateEntity.Event]
   ): Future[Done] = {
 
-    // TODO only care about certain events, dont project others
-    val (id, event) = envelope.event match {
-      case DeliveryDateEntity.SomethingHappened(id, event) =>
-        log.info("*** DWL SomethingHappened...")
-        (id.toString, event)
-    }
+    envelope.event match {
+      case DeliveryDateEntity.DeliveryDateUpdated(id, event) =>
+        val producerRecord = new ProducerRecord(topic, id.toString, event)
 
-    val producerRecord = new ProducerRecord(topic, id, event)
-
-    sendProducer.send(producerRecord).map { metadata =>
-      log.info(s"Published event to topic - metadata [$metadata]")
-      Done
+        sendProducer.send(producerRecord).map { metadata =>
+          log.info(s"Published event to topic - metadata [$metadata]")
+          Done
+        }
+      case _ => Future.successful(Done)
     }
   }
 }

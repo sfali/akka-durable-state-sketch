@@ -13,7 +13,7 @@ object DomainEventsProjectionRunner {
     val numberOfSliceRanges: Int = system
       .settings
       .config
-      .getInt("delivery-date-service.domain.projections-slice-count")
+      .getInt("delivery-date-service.projections-slice-count")
 
     val sliceRanges = EventSourcedProvider.sliceRanges(
       system,
