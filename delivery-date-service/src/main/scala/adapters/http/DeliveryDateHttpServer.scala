@@ -1,12 +1,11 @@
 package adapters.http
 
-import akka.actor
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import org.slf4j.LoggerFactory
 
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 object DeliveryDateHttpServer {
 

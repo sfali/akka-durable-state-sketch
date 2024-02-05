@@ -19,18 +19,13 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion,
       "com.typesafe.akka" %% "akka-cluster-typed" % AkkaVersion,
       "com.typesafe.akka" %% "akka-cluster-sharding-typed" % AkkaVersion,
-//      "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "de.heikoseeberger" %% "akka-http-circe" % "1.39.2",
       "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % AkkaManagementVersion,
       "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
       "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
-      "com.lightbend.akka" %% "akka-projection-durable-state" % "1.5.1", // TOOD need this still?
+      "com.lightbend.akka" %% "akka-projection-durable-state" % "1.5.1",
       "com.lightbend.akka" %% "akka-projection-eventsourced" % "1.5.1",
-
-//      "com.lightbend.akka" %% "akka-projection-jdbc" % "1.5.1", Replace with R2DB
       "com.lightbend.akka" %% "akka-projection-r2dbc" % "1.5.2",
-//      "org.apache.kafka" %% "kafka-clients" % AkkaVersion,
-
       "org.typelevel" %% "cats-core" % "2.9.0",
       "com.typesafe.akka" %% "akka-stream-kafka" % "4.0.0",
       "io.circe" %% "circe-core" % circeVersion,
@@ -40,19 +35,11 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-discovery" % AkkaVersion,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
       "org.scalatest" %% "scalatest" % "3.2.15" % Test,
-
-//      "com.lightbend.akka" %% "akka-persistence-jdbc" % "5.2.0", Replace JDBC with R2DB
       "com.lightbend.akka" %% "akka-persistence-r2dbc" % "1.2.1",
-
-      "com.typesafe.akka" %% "akka-http" % "10.6.0", // Akka HTTP
+      "com.typesafe.akka" %% "akka-http" % "10.6.0",
       "com.typesafe.akka" %% "akka-http-spray-json" % "10.6.0", // Align akka-http-spray-json version with akka-http
-
-
       "com.typesafe.akka" %% "akka-persistence-query" % AkkaVersion,
-      "com.typesafe.slick" %% "slick" % SlickVersion,
-      "com.typesafe.slick" %% "slick-hikaricp" % SlickVersion,
       "org.postgresql" % "postgresql" % "42.5.4",
-
       // fixes this error: java.lang.NoClassDefFoundError: com/typesafe/sslconfig/util/LoggerFactory
       "com.typesafe" %% "ssl-config-core" % "0.6.1"
     )

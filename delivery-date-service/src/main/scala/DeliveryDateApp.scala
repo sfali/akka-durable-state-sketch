@@ -33,7 +33,7 @@ object DeliveryDateApp {
 
       DeliveryDateHttpServer.start(
         routes = new Routes(repo).routes,
-        port = 1234 // TODO add config
+        port = 1234
       )
 
       DeliveryDateServiceKafkaAdapter.consumeEventsFromKafka(deliveryDateService)

@@ -1,15 +1,10 @@
 package deliverydate
 
-import akka.actor.typed.{ ActorRef, SupervisorStrategy }
+import akka.actor.typed.{ActorRef, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{
-  ChangeEventHandler,
-  DurableStateBehavior,
-  Effect
-}
-import cats.data.Validated.{ Invalid, Valid }
-import org.slf4j.LoggerFactory
+import akka.persistence.typed.state.scaladsl.{ChangeEventHandler, DurableStateBehavior, Effect}
+import cats.data.Validated.{Invalid, Valid}
 
 import java.time.Instant
 import java.util.UUID

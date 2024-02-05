@@ -18,7 +18,6 @@ import scala.concurrent.duration._
 object DeliveryDateServiceKafkaAdapter {
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  // TODO add to config
   private val groupId = "delivery-date-ingress"
   private val topic = "external-events"
 
@@ -29,7 +28,7 @@ object DeliveryDateServiceKafkaAdapter {
 
     val consumerSettings: ConsumerSettings[String, String] =
       ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
-        .withBootstrapServers("localhost:9092") // TODO add to config
+        .withBootstrapServers("localhost:9092")
         .withGroupId(groupId)
         .withStopTimeout(0.seconds)
 
