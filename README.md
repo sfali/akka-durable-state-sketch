@@ -30,4 +30,5 @@ TODO add clarification on this
 
 ### Diagram
 
-![img.png](img.png)
+<img width="1256" alt="image" src="https://github.com/davidleacock/akka-durable-state-sketch/assets/125934110/05d611b5-1037-4725-82f5-8e50eb673250">
+
