@@ -17,8 +17,6 @@ import scala.concurrent.duration.DurationInt
 
 object DeliveryDateEntity {
 
-  private val log = LoggerFactory.getLogger(this.getClass)
-
   val TypeKey: EntityTypeKey[DeliveryDateEntity.Command] =
     EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate")
 
@@ -37,7 +35,8 @@ object DeliveryDateEntity {
     override val packageId: UUID = id
   }
 
-  private final case class DeliveryDateEvent(id: UUID, event: String) extends Event {
+  private final case class DeliveryDateEvent(id: UUID, event: String)
+      extends Event {
     override val packageId: UUID = id
   }
 
@@ -57,11 +56,17 @@ object DeliveryDateEntity {
   private val stateChangeEventHandler =
     ChangeEventHandler[Command, DeliveryDateState, Event](
       updateHandler = {
-        case (_, _, UpdateDeliveryDate(packageId, eventId, _)) =>
-          DeliveryDateUpdated(packageId, s"$eventId was processed.")
+        case (oldState, newState, UpdateDeliveryDate(packageId, eventId, _)) =>
+          DeliveryDateUpdated(
+            packageId,
+            s"$eventId was processed for $packageId. ${oldState.deliveryDate} to ${newState.deliveryDate}"
+          )
       },
       deleteHandler = { (state, _) =>
-        DeliveryDateEvent(state.packageId, "Entity deleted.")
+        DeliveryDateEvent(
+          state.packageId,
+          s" ${state.packageId} Entity deleted."
+        )
       }
     )
 
