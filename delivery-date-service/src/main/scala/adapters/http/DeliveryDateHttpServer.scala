@@ -13,7 +13,7 @@ object DeliveryDateHttpServer {
 
   def start(routes: Route, port: Int)(implicit system: ActorSystem[_]): Unit = {
     import system.executionContext
-    // TODO Config
+
     Http()
       .newServerAt("localhost", port)
       .bind(routes)
