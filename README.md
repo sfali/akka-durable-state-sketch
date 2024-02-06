@@ -18,7 +18,10 @@ accurate. These events are represented by an `EventId` which is a 4 digit number
 2.  Run the DeliveryDateApp 
 3. Open a terminal to Kafka to gain access to the KafkaCLI and run the following command to open the producer shell script
    `kafka-console-producer --topic external-events --bootstrap-server localhost:9092`
-4. Paste in the appropriate payload, an example is `{ "packageId": "28370fa8-024d-467f-97d6-fbdbfa25f250", "eventId": 4000 }` this represents the package having recieved a "4000 event" which in the real world could mean its been scanned at a local sorting facility, or made it to its final destination facility.
+   You can also open up a new Kakfa CLI instance and create a consumer to read the DDS egress topic, which just presents the events as simple descriptive strings but in the real world would be replaced with something like a serialized protobuf message
+   `kafka-console-consumer --bootstrap-server localhost:9092 --topic delivery-date-events --from-beginning`
+
+4. Paste in the appropriate payload in the producer CLI window, an example is `{ "packageId": "28370fa8-024d-467f-97d6-fbdbfa25f250", "eventId": 4000 }` this represents the package having recieved a "4000 event" which in the real world could mean its been scanned at a local sorting facility, or made it to its final destination facility. (Events from 0000 to 5000 are acceptable)
 5. There is a http server running with a helper API in order to access the current DeliveryDate for a package, an example would be
  `GET http://localhost:1234/packageId/28370fa8-024d-467f-97d6-fbdbfa25f250` this will present a string of the current eventId processed, the current delivery date and a log of all previous events that the package has experienced. 
 
