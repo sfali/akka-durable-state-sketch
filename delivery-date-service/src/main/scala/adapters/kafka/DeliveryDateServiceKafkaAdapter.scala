@@ -22,8 +22,10 @@ object DeliveryDateServiceKafkaAdapter {
   private val topic = "external-events"
 
   def consumeEventsFromKafka(
-    deliveryDateService: DeliveryDateService,
-  )(implicit system: ActorSystem[_]): Unit = {
+    deliveryDateService: DeliveryDateService
+  )(implicit
+    system: ActorSystem[_]
+  ): Unit = {
     implicit val ec: ExecutionContextExecutor = system.executionContext
 
     val consumerSettings: ConsumerSettings[String, String] =
@@ -34,11 +36,10 @@ object DeliveryDateServiceKafkaAdapter {
 
     Consumer
       .plainSource(consumerSettings, Subscriptions.topics(topic))
-      .map(record => {
-        decode[ExternalEvent](record.value())
-      })
+      .map(record => decode[ExternalEvent](record.value()))
       .collect { case Right(event) => event }
       .mapAsync(4) { event =>
+        log.info("Received external event: {}", event)
         deliveryDateService
           .updateDeliveryDate(
             UUID.fromString(event.packageId),

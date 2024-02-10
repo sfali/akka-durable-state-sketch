@@ -5,24 +5,28 @@ import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.util.Timeout
 import deliverydate.DeliveryDateEntity
 import deliverydate.DeliveryDateEntity._
+import org.slf4j.LoggerFactory
 
 import java.time.Instant
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultDeliveryDateService(
   clusterSharding: ClusterSharding
-)(implicit ec: ExecutionContext,
-  implicit val system: ActorSystem[_])
+)(implicit
+  val system: ActorSystem[_])
     extends DeliveryDateService {
 
+  private val logger = LoggerFactory.getLogger(classOf[DeliveryDateService])
+  import system.executionContext
   private implicit val askTimeout: Timeout = Timeout(5.seconds)
 
   override def updateDeliveryDate(
     packageId: UUID,
     eventId: Int
   ): Future[String] = {
+    logger.info("About send request for: {} with eventId: {}", packageId, eventId)
     clusterSharding
       .entityRefFor(DeliveryDateEntity.TypeKey, packageId.toString)
       .ask[Reply] { ref =>

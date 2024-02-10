@@ -12,8 +12,9 @@ import scala.concurrent.duration.DurationInt
 
 object DeliveryDateEntity {
 
+  val EntityName = "DeliveryDate"
   val TypeKey: EntityTypeKey[DeliveryDateEntity.Command] =
-    EntityTypeKey[DeliveryDateEntity.Command]("DeliveryDate")
+    EntityTypeKey[DeliveryDateEntity.Command](EntityName)
 
   final case class DeliveryDateState(
     packageId: UUID,
@@ -30,8 +31,7 @@ object DeliveryDateEntity {
     override val packageId: UUID = id
   }
 
-  private final case class DeliveryDateEvent(id: UUID, event: String)
-      extends Event {
+  private final case class DeliveryDateEvent(id: UUID, event: String) extends Event {
     override val packageId: UUID = id
   }
 
@@ -45,17 +45,15 @@ object DeliveryDateEntity {
   trait Reply
   final case class UpdateSuccessful(packageId: UUID) extends Reply
   final case class UpdateFailed(packageId: UUID, reason: String) extends Reply
-  final case class DeliveryDate(packageId: UUID, deliveryDate: Option[Instant])
-      extends Reply
+  final case class DeliveryDate(packageId: UUID, deliveryDate: Option[Instant]) extends Reply
 
   private val stateChangeEventHandler =
     ChangeEventHandler[Command, DeliveryDateState, Event](
-      updateHandler = {
-        case (oldState, newState, UpdateDeliveryDate(packageId, eventId, _)) =>
-          DeliveryDateUpdated(
-            packageId,
-            s"$eventId was processed for $packageId. ${oldState.deliveryDate} to ${newState.deliveryDate}"
-          )
+      updateHandler = { case (oldState, newState, UpdateDeliveryDate(packageId, eventId, _)) =>
+        DeliveryDateUpdated(
+          packageId,
+          s"$eventId was processed for $packageId. ${oldState.deliveryDate} to ${newState.deliveryDate}"
+        )
       },
       deleteHandler = { (state, _) =>
         DeliveryDateEvent(
@@ -65,42 +63,38 @@ object DeliveryDateEntity {
       }
     )
 
-  private val commandHandler
-    : (DeliveryDateState, Command) => Effect[DeliveryDateState] = {
-    (state, command) =>
-      command match {
-        case UpdateDeliveryDate(packageId, eventId, replyTo) =>
-          DeliveryDateRuleEngine.evaluate(eventId, state) match {
-            case Valid(validatedDate) =>
-              val processTime = Instant.now()
-              val eventDescription =
-                s"eventId: $eventId processedAt: $processTime updated date: $validatedDate"
+  private val commandHandler: (DeliveryDateState, Command) => Effect[DeliveryDateState] = { (state, command) =>
+    command match {
+      case UpdateDeliveryDate(packageId, eventId, replyTo) =>
+        DeliveryDateRuleEngine.evaluate(eventId, state) match {
+          case Valid(validatedDate) =>
+            val processTime = Instant.now()
+            val eventDescription =
+              s"eventId: $eventId processedAt: $processTime updated date: $validatedDate"
 
-              Effect
-                .persist(
-                  DeliveryDateState(
-                    packageId,
-                    Some(eventId),
-                    Some(validatedDate),
-                    processTime,
-                    eventLog = state.eventLog :+ eventDescription
-                  )
+            Effect
+              .persist(
+                DeliveryDateState(
+                  packageId,
+                  Some(eventId),
+                  Some(validatedDate),
+                  processTime,
+                  eventLog = state.eventLog :+ eventDescription
                 )
-                .thenReply(replyTo)(_ => UpdateSuccessful(packageId))
-            case Invalid(e) =>
-              Effect
-                .none
-                .thenReply(replyTo)(_ =>
-                  UpdateFailed(packageId, reason = e.toString())
-                )
+              )
+              .thenReply(replyTo)(_ => UpdateSuccessful(packageId))
+          case Invalid(e) =>
+            Effect
+              .none
+              .thenReply(replyTo)(_ => UpdateFailed(packageId, reason = e.toString()))
 
-          }
-      }
+        }
+    }
   }
 
   def apply(
     packageId: UUID
-  ): DurableStateBehavior[Command, DeliveryDateState] = {
+  ): DurableStateBehavior[Command, DeliveryDateState] =
     DurableStateBehavior[Command, DeliveryDateState](
       persistenceId = PersistenceId(TypeKey.name, packageId.toString),
       emptyState = DeliveryDateState(
@@ -112,9 +106,8 @@ object DeliveryDateEntity {
       ),
       commandHandler = commandHandler
     )
-      .withChangeEventHandler(stateChangeEventHandler)
+      // .withChangeEventHandler(stateChangeEventHandler)
       .onPersistFailure(
         SupervisorStrategy.restartWithBackoff(200.millis, 5.seconds, 0.1)
       )
-  }
 }
