@@ -8,6 +8,7 @@ import cats.data.Validated.{Invalid, Valid}
 
 import java.time.Instant
 import java.util.UUID
+import scala.annotation.unused
 import scala.concurrent.duration.DurationInt
 
 object DeliveryDateEntity {
@@ -55,6 +56,7 @@ object DeliveryDateEntity {
   final case class UpdateFailed(packageId: UUID, reason: String) extends Reply
   final case class DeliveryDate(packageId: UUID, deliveryDate: Option[Instant]) extends Reply
 
+  @unused
   private val stateChangeEventHandler =
     ChangeEventHandler[Command, DeliveryDateState, Event](
       updateHandler = { case (oldState, newState, UpdateDeliveryDate(packageId, eventId, _)) =>
