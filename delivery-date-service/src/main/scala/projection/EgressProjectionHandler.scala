@@ -6,8 +6,12 @@ import akka.kafka.scaladsl.SendProducer
 import akka.persistence.query.{DeletedDurableState, DurableStateChange, UpdatedDurableState}
 import akka.projection.scaladsl.Handler
 import deliverydate.DeliveryDateEntity
+import deliverydate.DeliveryDateEntity.DeliveryDateState
+import deliverydate.api.{DeliveryDateNotUpdated, DeliveryDateUpdated, EgressEvent}
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.LoggerFactory
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 import scala.concurrent.Future
 
@@ -23,15 +27,8 @@ class EgressProjectionHandler(
   override def process(envelope: DurableStateChange[DeliveryDateEntity.DeliveryDateState]): Future[Done] =
     envelope match {
       case update: UpdatedDurableState[_] =>
-        val state = update.value
-        log.info("Consuming: {}", state)
-
-        val producerRecord = new ProducerRecord(
-          topic,
-          state.packageId.toString,
-          s"State updated: recentEventId: ${state.recentEventId.getOrElse("None")}, deliveryDate: ${state.deliveryDate.map(_.toString).getOrElse("None")}"
-        )
-
+        val event = toEgressEvent(update.value)
+        val producerRecord = new ProducerRecord(topic, event.id.toString, event.asJson.noSpaces)
         sendProducer.send(producerRecord).map { metadata =>
           log.info(s"Published event to topic - metadata [$metadata]")
           Done
@@ -41,4 +38,22 @@ class EgressProjectionHandler(
         log.warn("Delete is not supported yet")
         Future.successful(Done)
     }
+
+  private def toEgressEvent(state: DeliveryDateState): EgressEvent = {
+    log.info("Consuming: {}", state)
+    if (state.isDeliveryDateUpdated) {
+      DeliveryDateUpdated(
+        id = state.packageId,
+        event = state.recentEventId.get,
+        date = state.deliveryDate.get
+      )
+    } else {
+      DeliveryDateNotUpdated(
+        id = state.packageId,
+        event = state.recentEventId.get,
+        date = state.deliveryDate.get
+      )
+    }
+  }
+
 }

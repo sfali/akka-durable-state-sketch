@@ -15,10 +15,12 @@ import akka.projection.{Projection, ProjectionId}
 import deliverydate.DeliveryDateEntity
 import org.apache.kafka.common.serialization.StringSerializer
 
+import scala.annotation.unused
 import scala.concurrent.duration.DurationInt
 
 object DomainProjection {
 
+  @unused
   def projection(
     sliceRange: Range
   )(implicit
