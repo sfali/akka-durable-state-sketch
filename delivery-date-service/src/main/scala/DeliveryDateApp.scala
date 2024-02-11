@@ -10,15 +10,13 @@ import query.DeliveryDateStateRepository
 import service.DefaultDeliveryDateService
 
 import java.util.UUID
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object DeliveryDateApp {
 
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit =
     ActorSystem[Command](behavior(), "delivery-date-app")
-  }
 
-  private def behavior(): Behavior[Command] = {
+  private def behavior(): Behavior[Command] =
     Behaviors.setup[Command] { context =>
       implicit val system: ActorSystem[_] = context.system
 
@@ -42,5 +40,4 @@ object DeliveryDateApp {
 
       Behaviors.empty
     }
-  }
 }
