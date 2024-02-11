@@ -11,7 +11,7 @@ object DeliveryDateRuleEngine {
   def evaluate(
     newEventId: Int,
     state: DeliveryDateState
-  ): ValidatedNel[String, Instant] = {
+  ): ValidatedNel[String, Instant] =
     (state.deliveryDate, state.recentEventId) match {
       case (Some(currentDeliveryDate), Some(currentEventId)) =>
         if (currentEventId == 2525 || currentEventId == 3535) {
@@ -25,7 +25,6 @@ object DeliveryDateRuleEngine {
         validateEventId(newEventId, None)
       case _ => "Unable to calculate DeliveryDate".invalidNel
     }
-  }
 
   /*
     - EventId must be 4 digits in length, otherwise considered invalid.
@@ -37,8 +36,7 @@ object DeliveryDateRuleEngine {
   private def validateEventId(
     newEventId: Int,
     currentDeliveryDate: Option[Instant]
-  ): ValidatedNel[String, Instant] = {
-
+  ): ValidatedNel[String, Instant] =
     newEventId.toString match {
       case id if id.length == 4 =>
         currentDeliveryDate match {
@@ -52,15 +50,9 @@ object DeliveryDateRuleEngine {
                 date
               }
 
-            // Ensure that new updatedDate DeliveryDate is sooner than previous one, but also exists in the future
-            if (updatedDate.isBefore(date) && updatedDate.isAfter(Instant.now())) {
-              updatedDate.validNel
-            } else {
-              "Invalid DeliveryDate generated".invalidNel
-            }
+            updatedDate.validNel
           case None => Instant.now().plus(30, ChronoUnit.DAYS).validNel
         }
       case _ => "Invalid EventId".invalidNel
     }
-  }
 }

@@ -20,8 +20,16 @@ object DeliveryDateEntity {
     packageId: UUID,
     recentEventId: Option[Int],
     deliveryDate: Option[Instant],
+    previousDeliveryDate: Option[Instant],
     updated: Instant,
-    eventLog: List[String])
+    eventLog: List[String]) {
+
+    def isDeliveryDateUpdated: Boolean =
+      previousDeliveryDate match {
+        case Some(date) => !deliveryDate.contains(date)
+        case None       => deliveryDate.isDefined
+      }
+  }
 
   sealed trait Event {
     val packageId: UUID
@@ -75,10 +83,11 @@ object DeliveryDateEntity {
             Effect
               .persist(
                 DeliveryDateState(
-                  packageId,
-                  Some(eventId),
-                  Some(validatedDate),
-                  processTime,
+                  packageId = packageId,
+                  recentEventId = Some(eventId),
+                  deliveryDate = Some(validatedDate),
+                  previousDeliveryDate = state.deliveryDate,
+                  updated = processTime,
                   eventLog = state.eventLog :+ eventDescription
                 )
               )
@@ -101,6 +110,7 @@ object DeliveryDateEntity {
         packageId = packageId,
         recentEventId = None,
         deliveryDate = None,
+        previousDeliveryDate = None,
         updated = Instant.now(),
         eventLog = List.empty
       ),
