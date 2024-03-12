@@ -44,13 +44,13 @@ class EgressProjectionHandler(
     if (state.isDeliveryDateUpdated) {
       DeliveryDateUpdated(
         id = state.packageId,
-        event = state.recentEventId.get,
+        event = state.recentEventId,
         date = state.deliveryDate.get
       )
     } else {
       DeliveryDateNotUpdated(
         id = state.packageId,
-        event = state.recentEventId.get,
+        event = state.recentEventId,
         date = state.deliveryDate.get
       )
     }

@@ -1,6 +1,5 @@
 package deliverydate
 
-import akka.actor.testkit.typed.TestKitSettings
 import akka.actor.testkit.typed.scaladsl.{LogCapturing, ScalaTestWithActorTestKit, TestProbe}
 import akka.persistence.testkit.PersistenceTestKitDurableStateStorePlugin
 import com.typesafe.config.{Config, ConfigFactory}
@@ -16,7 +15,6 @@ class DeliveryDateEntitySpec
     with Matchers
     with LogCapturing {
 
-  override implicit val testKitSettings: TestKitSettings = TestKitSettings(system)
   private val replyProbe = TestProbe[Reply]()
 
   "DeliveryDateEntity" should {

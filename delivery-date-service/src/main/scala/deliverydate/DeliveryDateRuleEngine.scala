@@ -12,18 +12,17 @@ object DeliveryDateRuleEngine {
     newEventId: Int,
     state: DeliveryDateState
   ): ValidatedNel[String, Instant] =
-    (state.deliveryDate, state.recentEventId) match {
-      case (Some(currentDeliveryDate), Some(currentEventId)) =>
-        if (currentEventId == 2525 || currentEventId == 3535) {
+    state.deliveryDate match {
+      case Some(currentDeliveryDate) =>
+        if (state.recentEventId == 2525 || state.recentEventId == 3535) {
           // No further updates allowed after consuming 2525/3535 event. Use current date.
           currentDeliveryDate.validNel
         } else {
           validateEventId(newEventId, Some(currentDeliveryDate))
         }
 
-      case (None, None) =>
-        validateEventId(newEventId, None)
-      case _ => "Unable to calculate DeliveryDate".invalidNel
+      case None => validateEventId(newEventId, None)
+      case _    => "Unable to calculate DeliveryDate".invalidNel
     }
 
   /*

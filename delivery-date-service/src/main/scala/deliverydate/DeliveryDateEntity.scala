@@ -20,7 +20,7 @@ object DeliveryDateEntity {
 
   final case class DeliveryDateState(
     packageId: UUID,
-    recentEventId: Option[Int],
+    recentEventId: Int,
     deliveryDate: Option[Instant],
     previousDeliveryDate: Option[Instant],
     updated: Instant,
@@ -74,34 +74,49 @@ object DeliveryDateEntity {
       }
     )
 
-  private val commandHandler: (DeliveryDateState, Command) => ReplyEffect[DeliveryDateState] = { (state, command) =>
-    command match {
-      case UpdateDeliveryDate(packageId, eventId, replyTo) =>
-        DeliveryDateRuleEngine.evaluate(eventId, state) match {
-          case Valid(validatedDate) =>
-            val processTime = Instant.now()
-            val eventDescription =
-              s"eventId: $eventId processedAt: $processTime updated date: $validatedDate"
+  private val commandHandler: (Option[DeliveryDateState], Command) => ReplyEffect[Option[DeliveryDateState]] = {
+    (maybeState, command) =>
+      command match {
+        case UpdateDeliveryDate(packageId, eventId, replyTo) =>
+          val state = maybeState.getOrElse(
+            DeliveryDateState(
+              packageId = packageId,
+              recentEventId = 0,
+              deliveryDate = None,
+              previousDeliveryDate = None,
+              updated = Instant.EPOCH,
+              eventLog = List.empty
+            )
+          )
 
-            Effect
-              .persist(
-                DeliveryDateState(
-                  packageId = packageId,
-                  recentEventId = Some(eventId),
-                  deliveryDate = Some(validatedDate),
-                  previousDeliveryDate = state.deliveryDate,
-                  updated = processTime,
-                  eventLog = state.eventLog :+ eventDescription
+          DeliveryDateRuleEngine.evaluate(eventId, state) match {
+            case Valid(validatedDate) =>
+              val processTime = Instant.now()
+              val eventDescription =
+                s"eventId: $eventId processedAt: $processTime updated date: $validatedDate"
+
+              Effect
+                .persist(
+                  Some(
+                    DeliveryDateState(
+                      packageId = packageId,
+                      recentEventId = eventId,
+                      deliveryDate = Some(validatedDate),
+                      previousDeliveryDate = state.deliveryDate,
+                      updated = processTime,
+                      eventLog = state.eventLog :+ eventDescription
+                    )
+                  )
                 )
-              )
-              .thenReply(replyTo)(_ => UpdateSuccessful(packageId))
-          case Invalid(e) =>
-            Effect
-              .none
-              .thenReply(replyTo)(_ => UpdateFailed(packageId, reason = e.toString()))
+                .thenReply(replyTo)(_ => UpdateSuccessful(packageId))
 
-        }
-    }
+            case Invalid(e) =>
+              Effect
+                .none
+                .thenReply(replyTo)(_ => UpdateFailed(packageId, reason = e.toString()))
+
+          }
+      }
   }
 
   def apply(
@@ -110,16 +125,9 @@ object DeliveryDateEntity {
     Behaviors.setup[Command] { context =>
       context.log.info("Initializing: {}", packageId)
       DurableStateBehavior
-        .withEnforcedReplies[Command, DeliveryDateState](
+        .withEnforcedReplies[Command, Option[DeliveryDateState]](
           persistenceId = PersistenceId(TypeKey.name, packageId.toString),
-          emptyState = DeliveryDateState(
-            packageId = packageId,
-            recentEventId = None,
-            deliveryDate = None,
-            previousDeliveryDate = None,
-            updated = Instant.now(),
-            eventLog = List.empty
-          ),
+          emptyState = None,
           commandHandler = commandHandler
         )
         .onPersistFailure(
