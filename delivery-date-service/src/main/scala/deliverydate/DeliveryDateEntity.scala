@@ -1,9 +1,10 @@
 package deliverydate
 
-import akka.actor.typed.{ActorRef, SupervisorStrategy}
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.state.scaladsl.{ChangeEventHandler, DurableStateBehavior, Effect}
+import akka.persistence.typed.state.scaladsl.{ChangeEventHandler, DurableStateBehavior, Effect, ReplyEffect}
 import cats.data.Validated.{Invalid, Valid}
 
 import java.time.Instant
@@ -73,7 +74,7 @@ object DeliveryDateEntity {
       }
     )
 
-  private val commandHandler: (DeliveryDateState, Command) => Effect[DeliveryDateState] = { (state, command) =>
+  private val commandHandler: (DeliveryDateState, Command) => ReplyEffect[DeliveryDateState] = { (state, command) =>
     command match {
       case UpdateDeliveryDate(packageId, eventId, replyTo) =>
         DeliveryDateRuleEngine.evaluate(eventId, state) match {
@@ -105,21 +106,24 @@ object DeliveryDateEntity {
 
   def apply(
     packageId: UUID
-  ): DurableStateBehavior[Command, DeliveryDateState] =
-    DurableStateBehavior[Command, DeliveryDateState](
-      persistenceId = PersistenceId(TypeKey.name, packageId.toString),
-      emptyState = DeliveryDateState(
-        packageId = packageId,
-        recentEventId = None,
-        deliveryDate = None,
-        previousDeliveryDate = None,
-        updated = Instant.now(),
-        eventLog = List.empty
-      ),
-      commandHandler = commandHandler
-    )
-      // .withChangeEventHandler(stateChangeEventHandler)
-      .onPersistFailure(
-        SupervisorStrategy.restartWithBackoff(200.millis, 5.seconds, 0.1)
-      )
+  ): Behavior[Command] =
+    Behaviors.setup[Command] { context =>
+      context.log.info("Initializing: {}", packageId)
+      DurableStateBehavior
+        .withEnforcedReplies[Command, DeliveryDateState](
+          persistenceId = PersistenceId(TypeKey.name, packageId.toString),
+          emptyState = DeliveryDateState(
+            packageId = packageId,
+            recentEventId = None,
+            deliveryDate = None,
+            previousDeliveryDate = None,
+            updated = Instant.now(),
+            eventLog = List.empty
+          ),
+          commandHandler = commandHandler
+        )
+        .onPersistFailure(
+          SupervisorStrategy.restartWithBackoff(200.millis, 5.seconds, 0.1)
+        )
+    }
 }

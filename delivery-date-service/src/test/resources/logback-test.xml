@@ -1,0 +1,8 @@
+<configuration>
+    <appender name="CapturingAppender" class="akka.actor.testkit.typed.internal.CapturingAppender"/>
+
+    <root level="DEBUG">
+        <appender-ref ref="CapturingAppender"/>
+    </root>
+
+</configuration>
